@@ -1,0 +1,11 @@
+{
+  "tracks": [
+    {
+      "track_id": "demo-1",
+      "title": "Demo Song",
+      "artist": "Example Artist",
+      "duration_seconds": 120,
+      "audio_url": "https://example.invalid/demo.mp3"
+    }
+  ]
+}

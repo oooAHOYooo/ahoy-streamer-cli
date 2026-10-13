@@ -1,0 +1,11 @@
+{
+  "shows": [
+    {
+      "show_id": "demo-video-1",
+      "title": "Demo Performance",
+      "host": "Example Artist",
+      "duration_seconds": 90,
+      "video_url": "https://example.invalid/demo.mp4"
+    }
+  ]
+}
