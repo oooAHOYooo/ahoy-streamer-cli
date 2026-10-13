@@ -40,7 +40,7 @@ See `docs/HANDOFF.md` for a ready-to-use implementation prompt.
 
 ## Publishing
 
-A local Git repository is initialized. GitHub creation is pending authentication.
-Intended repository name: `ahoy-streamer-cli`; proposed owner: `oooAHOYooo`.
-Start private while planning. Public release, package name availability, and license are
+GitHub: https://github.com/oooAHOYooo/ahoy-streamer-cli
+
+The repository is private while planning. Public release, package name availability, and license are
 release decisions, not completed work. See `docs/RELEASE.md`.

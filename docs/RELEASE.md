@@ -1,16 +1,11 @@
 # Repository and release checklist
 
-## Hosted repository (pending authentication)
+## Hosted repository
 
-After GitHub sign-in, verify the intended account/owner and create the repository:
+Created and pushed: https://github.com/oooAHOYooo/ahoy-streamer-cli (private).
+Local main tracks origin/main. GitHub CLI authentication works as oooAHOYooo;
+network sandbox restrictions can make an authentication check appear to fail.
 
-```sh
-gh auth login -h github.com
-gh repo create oooAHOYooo/ahoy-streamer-cli --private --source=. --remote=origin --push
-```
-
-Run from this folder. If that remote already exists, inspect it instead of creating
-or overwriting it. No remote has been created by this planning session.
 Private is an initial planning default; public visibility and a license should be
 selected deliberately before outreach. Do not assume this project inherits the
 platform's license. Do not publish to PyPI until package name ownership is checked.
