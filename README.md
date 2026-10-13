@@ -24,6 +24,9 @@ and request playback without navigating screens. JSON is a stable public contrac
 Usage:
 
 ```sh
+git clone --branch codex/streamer-tui-first-draft --single-branch https://github.com/oooAHOYooo/ahoy-streamer-cli.git
+cd ahoy-streamer-cli
+brew install mpv
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
