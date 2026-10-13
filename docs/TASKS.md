@@ -61,12 +61,15 @@ no secrets, media, local state or caches packaged. Public licensing remains a de
 - P5 — Wider media: poems, What's New, games, and live TV guide interaction are future
   navigation candidates after the core catalog/detail experience stabilizes.
 
-## Later backlog (do not implement during T01–T05)
-- Podcasts, channels, radio and synchronized TV after playback/timeline contracts are clear.
-- Local IPC controller + status/pause/queue, with process ownership and stale socket tests.
-- Public channels/TV/radio playback only after timeline behavior is specified.
-- Browser-based auth and saved collections after dedicated security/API design.
-- Kitty/Sixel, Windows support, signed binaries, package-manager formula.
+## Remaining release backlog
+
+- Finish P1–P5 above; podcasts, artists, events, studio, and radio browsing are already
+  implemented in the current draft. Radio playback starts at the manifest's current item
+  but does not yet advance automatically. AHOY TV shows channel libraries, not a verified
+  synchronized schedule.
+- T05: clean-install/package checks, CI, supported-platform documentation, and licensing.
+- Optional later work: Kitty/Sixel renderers, Windows support, signed binaries, and a
+  package-manager formula.
 
 Escalate design questions only if the fixed contract cannot be satisfied. A failed test
 or missing executable is normally a task-level fix, not a reason to redesign the tool.
