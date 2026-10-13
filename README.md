@@ -2,7 +2,7 @@
 
 A keyboard-first terminal listening room for discovering and playing independent media from AHOY Streamer, with a small JSON command interface for agents.
 
-**Status: planning repository. No CLI is implemented or published yet.**
+**Status: first runnable draft. Not published as a package; live playback has not been manually verified.**
 
 ## Start here
 
@@ -19,15 +19,23 @@ and live channels follow after their playback behavior is understood.
 A small command interface remains alongside the TUI so agents can search, inspect,
 and request playback without navigating screens. JSON is a stable public contract.
 
-Planned usage (these commands do not exist yet):
+Usage:
 
 ```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
 ahoy                         # open the terminal listening room
 ahoy search poets --json
 ahoy show music:song_1 --json
 ahoy play music:song_1
 ahoy watch video:example --video=ascii
 ```
+
+Install mpv separately for playback. Terminal video is experimental and requires an mpv
+build with the `caca` output; use `ahoy watch video:ID --video=window` when unavailable.
+The TUI provides Music and Videos tabs, `/` search, arrow keys or `j`/`k` selection,
+Enter playback, `r` refresh, and `q` exit. Data commands need a network connection.
 
 ## Chosen implementation
 
