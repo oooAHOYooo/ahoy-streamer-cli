@@ -43,6 +43,24 @@ CI for offline tests, and reproducible package-build checks. Keep publishing man
 Done: clean virtualenv install and CLI invocation; sdist/wheel contents verified;
 no secrets, media, local state or caches packaged. Public licensing remains a decision.
 
+## App-parity follow-up phases
+
+- P1 — Detail coverage: add richer artist/event/podcast/studio detail fetches and
+  keyboard back/forward navigation. Current selection details use public list payloads.
+- P2 — TV guide fidelity: API `/api/live-tv/channels` currently returns each channel's
+  item library plus `scheduled`; slot IDs/times and show schedule metadata are discarded
+  in the response. SPA `useLiveTvSchedule.js` builds a local rotation from item durations,
+  anchored to the current half-hour. CLI labels these as channel libraries and does not
+  claim server-scheduled/live parity. Add authoritative schedule API before mirroring a
+  real guide or synchronized playback.
+- P3 — Persistent playback lifecycle: current TUI owns its mpv subprocess and offers
+  pause/stop while open; quit ends playback. Cross-session daemon/control is deferred.
+- P4 — User features: accounts, cross-device sync/casting, purchases, downloads, admin,
+  saved playlists, likes/follows, and notifications stay out of scope. Consider local-only
+  bookmarks/queues only after playback ownership and storage contracts are designed.
+- P5 — Wider media: poems, What's New, games, and live TV guide interaction are future
+  navigation candidates after the core catalog/detail experience stabilizes.
+
 ## Later backlog (do not implement during T01–T05)
 - Podcasts, channels, radio and synchronized TV after playback/timeline contracts are clear.
 - Local IPC controller + status/pause/queue, with process ownership and stale socket tests.

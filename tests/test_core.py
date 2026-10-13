@@ -33,6 +33,22 @@ class CoreTests(unittest.TestCase):
                 rows = json.load(f)[key]
             self.assertTrue(all(catalog.normalize(kind, row) for row in rows))
 
+    def test_section_adapters_keep_podcast_and_channel_scope(self):
+        podcast_payload = {"shows": [{"title": "Podcast Name", "episodes": [
+            {"id": "ep-1", "title": "Episode", "audio_url": "https://media.test/e.mp3"}
+        ]}]}
+        tv_payload = {"scheduled": True, "channels": [{"id": "films", "name": "Films", "items": [
+            {"id": "v-1", "title": "Short", "video_url": "https://media.test/v.mp4"}
+        ]}]}
+        with patch.object(catalog, "fetch", side_effect=[podcast_payload, tv_payload]):
+            episode = catalog.section_items("podcasts", "https://api.test")[0]
+            program = catalog.section_items("tv", "https://api.test")[0]
+        self.assertEqual(episode["id"], "podcast:ep-1")
+        self.assertEqual(episode["creator"], "Podcast Name")
+        self.assertEqual(program["id"], "video:v-1")
+        self.assertEqual(program["channel_name"], "Films")
+        self.assertNotIn("startUTC", program)
+
 
 if __name__ == "__main__":
     unittest.main()

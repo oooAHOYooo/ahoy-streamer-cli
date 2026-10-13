@@ -28,7 +28,7 @@ def parser():
         q.add_argument("--timeout", type=float, default=10)
         if name == "search":
             q.add_argument("query")
-            q.add_argument("--type", choices=("music", "video", "all"), default="all")
+            q.add_argument("--type", choices=("music", "video", "podcasts", "artists", "events", "studio", "all"), default="all")
             q.add_argument("--limit", type=int, default=20)
         elif name == "show":
             q.add_argument("media_id")
@@ -94,9 +94,9 @@ def main():
                 print(json.dumps(item, indent=2, ensure_ascii=False))
             return 0
         kind, sep, _ = args.media_id.partition(":")
-        expected = "video" if args.command == "watch" else "music"
-        if not sep or kind != expected:
-            fail(f"{args.command} expects a {expected}:ID", "USAGE", 2)
+        expected = {"video"} if args.command == "watch" else {"music", "podcast", "radio"}
+        if not sep or kind not in expected:
+            fail(f"{args.command} expects one of {', '.join(sorted(expected))}:ID", "USAGE", 2)
         item = catalog.show(args.media_id, args.base_url, args.timeout)
         player.play(item, getattr(args, "video", "ascii"), require_tty=args.command == "watch")
         return 0

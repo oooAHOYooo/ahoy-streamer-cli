@@ -2,7 +2,7 @@
 
 A keyboard-first terminal listening room for discovering and playing independent media from AHOY Streamer, with a small JSON command interface for agents.
 
-**Status: first runnable draft. Not published as a package; live playback has not been manually verified.**
+**Status: app-like terminal browsing draft. Not published as a package; live playback has not been manually verified.**
 
 ## Start here
 
@@ -11,10 +11,12 @@ The implementation contract is `docs/SPEC.md`; upstream evidence is in `docs/UPS
 
 ## First release
 
-The first usable release is a keyboard-driven TUI for browsing music and videos and
-playing them through mpv. Video should be viewable inside the terminal in ASCII art,
-with window playback available when ASCII output is unavailable or unsuitable. Podcasts
-and live channels follow after their playback behavior is understood.
+The terminal app exposes Home, Music, Videos, Podcasts, Artists, Events, Studio, Radio,
+AHOY TV channel libraries, and Search in one keyboard-driven interface. It browses public
+catalogs and opens item details; mpv plays music/podcast/radio audio in the background,
+with pause/stop controls, and video in experimental terminal ASCII or a separate player
+window. This is a native terminal companion to the website, not a port of its account,
+payment, administration, or synchronized-device features.
 
 A small command interface remains alongside the TUI so agents can search, inspect,
 and request playback without navigating screens. JSON is a stable public contract.
@@ -33,9 +35,14 @@ ahoy watch video:example --video=ascii
 ```
 
 Install mpv separately for playback. Terminal video is experimental and requires an mpv
-build with the `caca` output; use `ahoy watch video:ID --video=window` when unavailable.
-The TUI provides Music and Videos tabs, `/` search, arrow keys or `j`/`k` selection,
-Enter playback, `r` refresh, and `q` exit. Data commands need a network connection.
+build with the `caca` output; press `w` on a selected video or use
+`ahoy watch video:ID --video=window` when unavailable. Use number keys 0–9 (Home through
+Search), arrow keys or `j`/`k` to browse, Enter for details, `p` to play, Space to pause,
+`x` to stop, `/` to search, `r` to refresh, and `q` to quit. Data sections need a network
+connection. AHOY TV currently displays the public channel libraries; the API does not
+provide authoritative slot timing, so the CLI does not claim synchronized live-TV parity.
+
+See [the feature map and follow-up phases](docs/TASKS.md) for covered sections and gaps.
 
 ## Chosen implementation
 
