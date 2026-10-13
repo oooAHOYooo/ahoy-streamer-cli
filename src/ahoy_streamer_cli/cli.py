@@ -18,7 +18,7 @@ class Parser(argparse.ArgumentParser):
 
 
 def parser():
-    p = Parser(prog="ahoy", description="AHOY Streamer terminal listening room")
+    p = Parser(prog="ahoy-streamer", description="AHOY Streamer terminal listening room")
     p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="command")
     for name in ("search", "show", "doctor"):
@@ -48,7 +48,7 @@ def fail(message, code="ERROR", exit_code=3, as_json=False):
     if as_json:
         emit(None, ok=False, code=code, message=str(message))
     else:
-        print(f"ahoy: {message}", file=sys.stderr)
+        print(f"ahoy-streamer: {message}", file=sys.stderr)
     raise SystemExit(exit_code)
 
 

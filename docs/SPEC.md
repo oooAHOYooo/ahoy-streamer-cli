@@ -4,7 +4,7 @@
 
 v0.1 is a keyboard-first terminal listening room (TUI) for browsing music and video,
 with a concise agent-friendly command interface and JSON output. The TUI is the default
-when `ahoy` runs interactively with no command. Video playback should stay in the
+when `ahoy-streamer` runs interactively with no command. Video playback should stay in the
 terminal as ASCII art when supported; window playback is the visible fallback.
 
 Start with music and on-demand videos. Add podcasts and live channels after their
@@ -20,16 +20,16 @@ remain usable from commands when no TTY exists.
 
 ## Commands
 
-- `ahoy` on an interactive TTY: launch the listening-room TUI.
-- `ahoy` without a TTY or `ahoy --help`: help, no network.
-- `ahoy --version`: package version, no network.
-- `ahoy doctor [--json]`: Python/platform/mpv availability; no network or playback.
-- `ahoy search QUERY [--type music|video|all] [--limit N] [--json]`:
+- `ahoy-streamer` on an interactive TTY: launch the listening-room TUI.
+- `ahoy-streamer` without a TTY or `ahoy-streamer --help`: help, no network.
+- `ahoy-streamer --version`: package version, no network.
+- `ahoy-streamer doctor [--json]`: Python/platform/mpv availability; no network or playback.
+- `ahoy-streamer search QUERY [--type music|video|all] [--limit N] [--json]`:
   default type all, limit 20; valid limit 1..100; case-insensitive substring search
   over title and creator. Stable ordering by type, casefolded title, then ID.
-- `ahoy show TYPE:ID [--json]`: normalized item, unknown IDs exit 4.
-- `ahoy play music:ID`: foreground audio through mpv, Ctrl-C cleans up child.
-- `ahoy watch video:ID [--video ascii|window]`: default ascii in the TUI;
+- `ahoy-streamer show TYPE:ID [--json]`: normalized item, unknown IDs exit 4.
+- `ahoy-streamer play music:ID`: foreground audio through mpv, Ctrl-C cleans up child.
+- `ahoy-streamer watch video:ID [--video ascii|window]`: default ascii in the TUI;
   command mode defaults to ascii unless `--video=window` is selected. Wrong media type is a usage error.
 
 Data commands accept `--base-url URL` and `--timeout SECONDS` after the subcommand.
@@ -101,7 +101,7 @@ adding dependencies. Kitty/Sixel are later optional render modes, not ASCII subs
 
 ## TUI behavior
 
-- `ahoy` without arguments opens the TUI only when stdin/stdout are TTYs; explicit
+- `ahoy-streamer` without arguments opens the TUI only when stdin/stdout are TTYs; explicit
   subcommands remain scriptable and never launch a screen.
 - Categories are immediately visible in the first view; avoid hidden arrow-only
   discovery or modal navigation for the primary destinations.

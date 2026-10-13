@@ -30,16 +30,16 @@ brew install mpv
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e .
-ahoy                         # open the terminal listening room
-ahoy search poets --json
-ahoy show music:song_1 --json
-ahoy play music:song_1
-ahoy watch video:example --video=ascii
+ahoy-streamer                         # open the terminal listening room
+ahoy-streamer search poets --json
+ahoy-streamer show music:song_1 --json
+ahoy-streamer play music:song_1
+ahoy-streamer watch video:example --video=ascii
 ```
 
 Install mpv separately for playback. Terminal video is experimental and requires an mpv
 build with the `caca` output; press `w` on a selected video or use
-`ahoy watch video:ID --video=window` when unavailable. Use number keys 0–9 (Home through
+`ahoy-streamer watch video:ID --video=window` when unavailable. Use number keys 0–9 (Home through
 Search), arrow keys or `j`/`k` to browse, Enter for details, `p` to play, Space to pause,
 `x` to stop, `/` to search, `r` to refresh, and `q` to quit. Data sections need a network
 connection. AHOY TV currently displays the public channel libraries; the API does not
@@ -50,7 +50,7 @@ See [the feature map and follow-up phases](docs/TASKS.md) for covered sections a
 ## Chosen implementation
 
 Python 3.11+, standard library runtime, argparse, urllib, subprocess, unittest.
-Package: `ahoy_streamer_cli`; installed command: `ahoy`.
+Package: `ahoy_streamer_cli`; installed command: `ahoy-streamer`.
 Use mpv as an optional external player; catalog operations must work without it.
 Initial supported playback platforms: macOS and Linux. Windows is deferred.
 No server, database, account system, custom decoder, or framework in the first release.

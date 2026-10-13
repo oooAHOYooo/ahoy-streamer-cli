@@ -6,7 +6,7 @@ Packaging smoke command: `python3 -m pip install -e .` in a project virtualenv.
 
 ## T01 — Scaffold and machine interface
 Dependencies: none. Read: SPEC commands/JSON/modules.
-Create pyproject.toml with setuptools, package src layout, `ahoy` entry point,
+Create pyproject.toml with setuptools, package src layout, `ahoy-streamer` entry point,
 .gitignore additions as needed, output/config modules, help/version/doctor.
 Do not implement placeholders that report success for unimplemented commands.
 Tests: no-arg help; version without network; doctor missing mpv; clean JSON stdout;

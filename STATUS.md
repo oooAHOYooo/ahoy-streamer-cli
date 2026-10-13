@@ -2,7 +2,7 @@
 
 - Stage: app-like public browsing draft implemented; not packaged or published.
 - Branch: `codex/streamer-tui-first-draft`; pushed to `origin`.
-- Implemented: `ahoy` entry point, doctor/search/show/play/watch commands, JSON envelopes, public catalogs for Home/Music/Videos/Podcasts/Artists/Events/Studio/Radio/AHOY TV channel libraries, cross-catalog search, item details, mpv TUI-owned background audio/window session with pause/stop, caca probe and window fallback.
+- Implemented: `ahoy-streamer` entry point, doctor/search/show/play/watch commands, JSON envelopes, public catalogs for Home/Music/Videos/Podcasts/Artists/Events/Studio/Radio/AHOY TV channel libraries, cross-catalog search, item details, mpv TUI-owned background audio/window session with pause/stop, caca probe and window fallback.
 - Verification: `PYTHONPYCACHEPREFIX=/private/tmp/ahoy-pycache PYTHONPATH=src python3 -m unittest discover -s tests -v` — 5 tests passed; compileall, version/help smoke, and `git diff --check` passed.
 - Install smoke: blocked in sandbox. Repository-local venv creation returned EPERM; external venv lacks setuptools and network/build dependencies. No successful editable install claimed.
 - Direct package import and fixture normalization tested; no live API, real audio, caca render, terminal resize, or Ctrl-C playback was manually tested.
