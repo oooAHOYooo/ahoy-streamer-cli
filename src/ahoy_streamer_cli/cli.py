@@ -70,12 +70,20 @@ def main():
             args.timeout = timeout(args.timeout)
         if args.command == "doctor":
             path = player.mpv_path()
-            data = {"python": platform.python_version(), "platform": platform.platform(), "mpv_available": bool(path), "mpv_path": path}
+            audio_ready = player.audio_backend_ready()
+            video_ready = player.video_backend_ready()
+            data = {"python": platform.python_version(), "platform": platform.platform(),
+                    "audio_backend": "miniaudio" if audio_ready else None,
+                    "audio_ready": audio_ready, "mpv_available": bool(path), "mpv_path": path,
+                    "video_backend": "opencv-python-headless" if video_ready else None,
+                    "playback": {"audio": "native output via miniaudio" if audio_ready else "system browser fallback",
+                                 "video_window": "mpv or system browser",
+                                 "video_ascii": "OpenCV grayscale frames" if video_ready else "unavailable"}}
             if as_json:
                 emit(data)
             else:
                 print(json.dumps(data, indent=2))
-            return 0 if path else 5
+            return 0 if audio_ready or video_ready else 5
         if args.command == "search":
             if not 1 <= args.limit <= 100:
                 raise ValueError("limit must be between 1 and 100")
@@ -98,12 +106,15 @@ def main():
         if not sep or kind not in expected:
             fail(f"{args.command} expects one of {', '.join(sorted(expected))}:ID", "USAGE", 2)
         item = catalog.show(args.media_id, args.base_url, args.timeout)
-        player.play(item, getattr(args, "video", "ascii"), require_tty=args.command == "watch")
+        mode = getattr(args, "video", "ascii")
+        playback = player.play(item, mode, require_tty=args.command == "watch")
+        if playback == "browser-fallback":
+            print("ASCII decoder is unavailable; opened this video in the system browser.", file=sys.stderr)
         return 0
     except LookupError as e:
         fail(e, "NOT_FOUND", 4, as_json)
     except FileNotFoundError as e:
-        fail(e, "MPV_MISSING", 5, as_json)
+        fail(e, "PLAYBACK_BACKEND_MISSING", 5, as_json)
     except (ValueError, TypeError) as e:
         fail(e, "VALIDATION", 2, as_json)
     except (OSError, RuntimeError) as e:

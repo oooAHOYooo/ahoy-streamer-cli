@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=65"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,14 @@ name = "ahoy-streamer-terminal"
 version = "0.1.0"
 description = "A keyboard-first terminal for AHOY Streamer"
 requires-python = ">=3.11"
+dependencies = [
+  "miniaudio>=1.71,<2; platform_system == 'Darwin' and (platform_machine == 'arm64' or platform_machine == 'x86_64') or platform_system == 'Windows' and platform_machine == 'AMD64' or platform_system == 'Linux' and platform_machine == 'x86_64'",
+  "opencv-python-headless==4.12.0.88; platform_system == 'Windows' and platform_machine == 'AMD64' or platform_system == 'Linux' and (platform_machine == 'x86_64' or platform_machine == 'aarch64')",
+  "windows-curses>=2.4; platform_system == 'Windows'",
+]
+
+[project.optional-dependencies]
+ascii-video = ["opencv-python-headless==4.12.0.88"]
 
 [project.scripts]
 ahoy-streamer = "ahoy_streamer_cli.cli:main"

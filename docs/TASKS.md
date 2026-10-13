@@ -9,7 +9,7 @@ Dependencies: none. Read: SPEC commands/JSON/modules.
 Create pyproject.toml with setuptools, package src layout, `ahoy-streamer` entry point,
 .gitignore additions as needed, output/config modules, help/version/doctor.
 Do not implement placeholders that report success for unimplemented commands.
-Tests: no-arg help; version without network; doctor missing mpv; clean JSON stdout;
+Tests: no-arg help; version without network; doctor bundled playback readiness; clean JSON stdout;
 invalid option exit 2 in JSON mode; origin/timeout validation.
 Done: editable install works and tests pass with mocked executable discovery.
 
@@ -24,10 +24,10 @@ Done: search/show pass offline; optional live smoke is separately recorded.
 
 ## T03 — Playback and ASCII video experiment
 Dependencies: T02. Read: SPEC playback.
-Implement foreground audio/video playback, mpv discovery, and the bounded ASCII-video
-experiment using `--vo=caca`. Keep window playback available. No daemon or queue.
-Tests: arguments, missing executable/driver, URL validation, player failure and cleanup.
-Manual: short video, selected terminal/mpv version, resize and Ctrl-C. Record limitations.
+Implement portable audio with miniaudio, OpenCV grayscale ASCII video, optional mpv/browser
+window fallback. Pin the LGPL FFmpeg wheel and preserve its license notices. No daemon/queue.
+Tests: synthetic audio decode and luma frame mapping, backend adapter, URL validation, errors.
+Manual: short audio/video, selected terminal, resize and Ctrl-C. Record platform limitations.
 
 ## T04 — Listening-room TUI
 Dependencies: T01–T03. Read: SPEC TUI behavior.
@@ -53,7 +53,7 @@ no secrets, media, local state or caches packaged. Public licensing remains a de
   anchored to the current half-hour. CLI labels these as channel libraries and does not
   claim server-scheduled/live parity. Add authoritative schedule API before mirroring a
   real guide or synchronized playback.
-- P3 — Persistent playback lifecycle: current TUI owns its mpv subprocess and offers
+- P3 — Persistent playback lifecycle: current TUI owns its local audio device and offers
   pause/stop while open; quit ends playback. Cross-session daemon/control is deferred.
 - P4 — User features: accounts, cross-device sync/casting, purchases, downloads, admin,
   saved playlists, likes/follows, and notifications stay out of scope. Consider local-only
@@ -68,7 +68,7 @@ no secrets, media, local state or caches packaged. Public licensing remains a de
   but does not yet advance automatically. AHOY TV shows channel libraries, not a verified
   synchronized schedule.
 - T05: clean-install/package checks, CI, supported-platform documentation, and licensing.
-- Optional later work: Kitty/Sixel renderers, Windows support, signed binaries, and a
+- Optional later work: Kitty/Sixel renderers, expanded Windows terminal checks, signed binaries, and a
   package-manager formula.
 
 Escalate design questions only if the fixed contract cannot be satisfied. A failed test

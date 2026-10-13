@@ -23,12 +23,12 @@ remain usable from commands when no TTY exists.
 - `ahoy-streamer` on an interactive TTY: launch the listening-room TUI.
 - `ahoy-streamer` without a TTY or `ahoy-streamer --help`: help, no network.
 - `ahoy-streamer --version`: package version, no network.
-- `ahoy-streamer doctor [--json]`: Python/platform/mpv availability; no network or playback.
+- `ahoy-streamer doctor [--json]`: Python/platform/audio/video backend and optional mpv availability; no network or playback.
 - `ahoy-streamer search QUERY [--type music|video|all] [--limit N] [--json]`:
   default type all, limit 20; valid limit 1..100; case-insensitive substring search
   over title and creator. Stable ordering by type, casefolded title, then ID.
 - `ahoy-streamer show TYPE:ID [--json]`: normalized item, unknown IDs exit 4.
-- `ahoy-streamer play music:ID`: foreground audio through mpv, Ctrl-C cleans up child.
+- `ahoy-streamer play music:ID`: foreground audio through miniaudio (or system browser fallback), Ctrl-C cleans up playback.
 - `ahoy-streamer watch video:ID [--video ascii|window]`: default ascii in the TUI;
   command mode defaults to ascii unless `--video=window` is selected. Wrong media type is a usage error.
 
@@ -48,10 +48,10 @@ JSON object plus newline on stdout; diagnostics only on stderr. Help is always t
 Success: `{"schema_version":1,"ok":true,"data":...}`.
 Error: `{"schema_version":1,"ok":false,"error":{"code":"NOT_FOUND","message":"..."}}`.
 Search data: `{"items":[],"count":0}`; count means returned count after limit.
-Show data: normalized media object. Doctor data: platform/Python/mpv diagnostic fields.
+Show data: normalized media object. Doctor data: platform/Python/backend diagnostic fields.
 
 Exit codes: 0 success; 2 usage/validation; 3 network/HTTP/invalid upstream schema;
-4 media ID not found; 5 missing mpv or unsupported requested rendering;
+4 media ID not found; 5 missing playback backend or unsupported requested rendering;
 6 player failure; 130 interrupted. Doctor exits 5 if mpv absent while reporting details.
 Argparse failures must honor --json on JSON-capable commands.
 
@@ -84,20 +84,22 @@ No network calls at import time. No new runtime dependency without a concrete ne
 
 ## Playback
 
-Use shutil.which to find mpv. subprocess with shell=False, explicit argument array,
---no-config, -- before media URL; audio adds --no-video. Suppress child stdout to
-preserve future scripting compatibility; actionable player failures go to stderr.
-Foreground process lifetime only in v0.1: no misleading `status` or `pause` command
-that cannot control another process. Search/doctor must work on headless systems.
+Audio uses miniaudio's bundled native library and a streaming HTTPS response adapter.
+Supported direct suffixes are MP3, WAV, FLAC, OGG/OGA Vorbis. HLS/playlists and unknown
+suffixes fail explicitly. Linux aarch64 skips miniaudio's runtime wheel and falls back to
+the system browser for audio. Seeking and radio track rollover are not implemented.
+The TUI owns audio output and supports pause/stop while it remains open.
 
-T03 is a time-boxed terminal-video experiment using mpv `--vo=caca` for colored
-ASCII output. It must not download or transcode media. Probe whether the local mpv build
-has the driver and require a TTY; on failure, explain how to select window playback.
-Restore terminal state and terminate the player on interruption. Keep window playback as
-a user-selectable fallback. Validate one short video on a named terminal/mpv build before
-calling the experiment usable; document frame-rate, color, resize, and compatibility
-limits. If caca is absent, test whether a small optional renderer is justified before
-adding dependencies. Kitty/Sixel are later optional render modes, not ASCII substitutes.
+ASCII video uses OpenCV VideoCapture to decode/resize frames and a local monochrome luma
+renderer. Pin `opencv-python-headless==4.12.0.88`; do not float to OpenCV 5 without a fresh
+license audit. Windows/Linux install it normally; macOS uses browser video by default. On
+macOS 13+, the `ascii-video` extra enables ASCII. Do not install that extra on macOS 12 or
+earlier (including Big Sur): the PyPI wheel requires macOS 13 and older OpenCV wheel tags hid
+incompatible system-library minimums. If cv2 is missing, `--video=ascii` launches the browser
+and reports that fallback. The upstream project says its wheels bundle LGPLv2.1 FFmpeg. Keep
+the upstream license and third-party notices available to users; the dependency is installed
+as its own wheel. Frame rate is capped at 30 fps and frames are resized to terminal dimensions.
+ASCII mode is silent. Window mode prefers mpv and otherwise opens the browser, including audio.
 
 ## TUI behavior
 
@@ -113,6 +115,10 @@ adding dependencies. Kitty/Sixel are later optional render modes, not ASCII subs
 
 ## Release acceptance
 
-Offline tests prove output contract, schema validation, network failures, subprocess
-arguments and cleanup. Opt-in manual checks prove real media/audio/video on macOS
-and Linux; until then report playback as unverified on the unchecked platform.
+Offline tests prove output contract, schema validation, network failures, ASCII luma mapping,
+and the miniaudio adapter. Opt-in manual checks prove device audio and URL video decode on
+macOS Intel/Apple Silicon, Windows x64, and Linux x86_64/aarch64. OpenCV 4.12 wheels exist for
+Windows x64/Linux x86_64/aarch64; macOS 13+ uses the optional extra and older macOS uses
+browser video. Miniaudio publishes no Linux aarch64 wheel, so that platform gets browser audio
+fallback. The miniaudio sdist can require a compiler and is intentionally not selected there.
+Until manually checked, report real device playback unverified on each platform.

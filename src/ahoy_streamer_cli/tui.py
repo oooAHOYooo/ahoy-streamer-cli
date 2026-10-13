@@ -169,22 +169,19 @@ def run(stdscr):
                 detail = not detail
             elif key == ord("p") and items:
                 item = items[selected]
-                if item.get("type") == "radio":
-                    item = dict(item)
-                    # Keep the deterministic station clock approximately in sync.
-                    item["start_seconds"] = item.get("elapsed_seconds", 0)
                 mode = "ascii" if item["type"] in {"video", "tv_program", "event_video"} else "window"
                 try:
                     if mode == "ascii":
                         curses.def_prog_mode()
                         curses.endwin()
-                        player.play(item, "ascii", require_tty=True)
+                        playback = player.play(item, "ascii", require_tty=True)
                         curses.reset_prog_mode()
                         stdscr.refresh()
-                        message = "Video playback ended · use w for a player window"
+                        message = ("ASCII decoder unavailable · opened video in your browser"
+                                   if playback == "browser-fallback" else "Video playback ended · use w for a player window")
                     else:
                         result = session.start(item, mode="window")
-                        message = "Playing · Space pauses, x stops" if result else "Playback started"
+                        message = "Playing · Space pauses, x stops" if result == "background" else "Opened in your system browser · controls are there"
                 except Exception as e:
                     try:
                         curses.reset_prog_mode()
@@ -197,7 +194,7 @@ def run(stdscr):
                 if item["type"] in {"video", "tv_program", "event_video"}:
                     try:
                         session.start(item, mode="window")
-                        message = "Video window playing · Space pauses, x stops"
+                        message = "Opened video in mpv or your system browser · controls are there"
                     except Exception as e:
                         message = str(e)
             elif key == ord(" ") and session.current:
