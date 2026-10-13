@@ -1,6 +1,6 @@
-# AHOY Streamer CLI
+# AHOY Streamer Terminal
 
-An agent-friendly command line for discovering and playing independent media from AHOY Streamer.
+A keyboard-first terminal listening room for discovering and playing independent media from AHOY Streamer, with a small JSON command interface for agents.
 
 **Status: planning repository. No CLI is implemented or published yet.**
 
@@ -11,17 +11,22 @@ The implementation contract is `docs/SPEC.md`; upstream evidence is in `docs/UPS
 
 ## First release
 
-Search music and videos, inspect a stable media ID, and play through a locally installed mpv.
-Machine-readable JSON is a first-class interface. Terminal video is the next milestone;
-a full-screen interface comes later.
+The first usable release is a keyboard-driven TUI for browsing music and videos and
+playing them through mpv. Video should be viewable inside the terminal in ASCII art,
+with window playback available when ASCII output is unavailable or unsuitable. Podcasts
+and live channels follow after their playback behavior is understood.
+
+A small command interface remains alongside the TUI so agents can search, inspect,
+and request playback without navigating screens. JSON is a stable public contract.
 
 Planned usage (these commands do not exist yet):
 
 ```sh
+ahoy                         # open the terminal listening room
 ahoy search poets --json
 ahoy show music:song_1 --json
 ahoy play music:song_1
-ahoy watch video:example --video=terminal
+ahoy watch video:example --video=ascii
 ```
 
 ## Chosen implementation

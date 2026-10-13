@@ -2,16 +2,26 @@
 
 ## Scope
 
-v0.1: help/version, doctor, music/video search, media inspection, foreground audio
-playback and ordinary video-window playback. v0.2: experimental colored-character
-terminal video. Later: interactive interface and local player control.
+v0.1 is a keyboard-first terminal listening room (TUI) for browsing music and video,
+with a concise agent-friendly command interface and JSON output. The TUI is the default
+when `ahoy` runs interactively with no command. Video playback should stay in the
+terminal as ASCII art when supported; window playback is the visible fallback.
 
-No accounts, purchases, downloads, transcripts generation, cross-device control,
-recommendation AI, playlists sync, daemon, or telemetry in v0.1.
+Start with music and on-demand videos. Add podcasts and live channels after their
+playback and timeline behavior is specified. No accounts, purchases, downloads,
+transcript generation, cross-device control, recommendation AI, playlist sync, daemon,
+or telemetry in the first release.
+
+The TUI is for settling in and watching/listening, not a dense admin dashboard. Use a
+small set of visible destinations (Music, Videos, Podcasts, Channels as they become
+supported), a selected-item list, and a now-playing area. Keyboard navigation must
+have an always-visible hint and work without a mouse. Search and playback must also
+remain usable from commands when no TTY exists.
 
 ## Commands
 
-- `ahoy` or `ahoy --help`: help, no network.
+- `ahoy` on an interactive TTY: launch the listening-room TUI.
+- `ahoy` without a TTY or `ahoy --help`: help, no network.
 - `ahoy --version`: package version, no network.
 - `ahoy doctor [--json]`: Python/platform/mpv availability; no network or playback.
 - `ahoy search QUERY [--type music|video|all] [--limit N] [--json]`:
@@ -19,8 +29,8 @@ recommendation AI, playlists sync, daemon, or telemetry in v0.1.
   over title and creator. Stable ordering by type, casefolded title, then ID.
 - `ahoy show TYPE:ID [--json]`: normalized item, unknown IDs exit 4.
 - `ahoy play music:ID`: foreground audio through mpv, Ctrl-C cleans up child.
-- `ahoy watch video:ID [--video window|terminal]`: default window;
-  terminal mode added in T04. Wrong media type is a usage error.
+- `ahoy watch video:ID [--video ascii|window]`: default ascii in the TUI;
+  command mode defaults to ascii unless `--video=window` is selected. Wrong media type is a usage error.
 
 Data commands accept `--base-url URL` and `--timeout SECONDS` after the subcommand.
 Origin precedence: flag > AHOY_BASE_URL > https://app.ahoy.ooo.
@@ -64,7 +74,10 @@ before public release. No private API tokens are needed or forwarded to media ho
 
 ## Modules (create when needed)
 
-src/ahoy_streamer_cli/{cli,output,config,catalog,models,player}.py
+src/ahoy_streamer_cli/{cli,output,config,catalog,models,player,tui}.py
+Keep screen rendering and keyboard input thin; the TUI calls the same catalog/player
+services as the command interface. Prefer a maintained minimal TUI dependency only if
+stdlib rendering becomes brittle; document the choice and pin supported versions.
 Use dependency injection for HTTP transport and subprocess invocation in tests.
 Keep CLI parsing separate from catalog normalization and player invocation.
 No network calls at import time. No new runtime dependency without a concrete need.
@@ -77,10 +90,26 @@ preserve future scripting compatibility; actionable player failures go to stderr
 Foreground process lifetime only in v0.1: no misleading `status` or `pause` command
 that cannot control another process. Search/doctor must work on headless systems.
 
-T04 terminal uses mpv --vo=tct (colored Unicode, not literal ASCII). Require a TTY;
-probe available drivers; fail clearly rather than silently opening a window. Restore
-terminal and terminate the child on interruption. Kitty/Sixel and literal ASCII are
-optional follow-ups; support varies with terminal and mpv build.
+T03 is a time-boxed terminal-video experiment using mpv `--vo=caca` for colored
+ASCII output. It must not download or transcode media. Probe whether the local mpv build
+has the driver and require a TTY; on failure, explain how to select window playback.
+Restore terminal state and terminate the player on interruption. Keep window playback as
+a user-selectable fallback. Validate one short video on a named terminal/mpv build before
+calling the experiment usable; document frame-rate, color, resize, and compatibility
+limits. If caca is absent, test whether a small optional renderer is justified before
+adding dependencies. Kitty/Sixel are later optional render modes, not ASCII substitutes.
+
+## TUI behavior
+
+- `ahoy` without arguments opens the TUI only when stdin/stdout are TTYs; explicit
+  subcommands remain scriptable and never launch a screen.
+- Categories are immediately visible in the first view; avoid hidden arrow-only
+  discovery or modal navigation for the primary destinations.
+- `q` exits, `/` searches, arrows or `j/k` move selection, Enter opens/plays,
+  Space pauses only when playback control exists. Show actionable key hints.
+- TUI refreshes remain bounded, selection survives refresh when the item still exists,
+  and network/player errors appear in the interface without a traceback.
+- TUI rendering is testable with a fake terminal; no full-screen UI in unit tests.
 
 ## Release acceptance
 

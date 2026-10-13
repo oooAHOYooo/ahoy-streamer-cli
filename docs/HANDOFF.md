@@ -11,8 +11,8 @@ Copy this prompt:
 > and update STATUS.md with results, blockers, and the next task. Do not implement
 > later tasks or publish anything. If a settled choice works, use it without research.
 
-For the next session replace T01 with T02, etc. A smaller coding model can be assigned
-a bounded task; evaluate it by the checks rather than assuming a model guarantees
+For the next session replace T01 with T02, etc. Build the ASCII-video experiment in T03
+and the listening-room TUI in T04. A smaller coding model can be assigned a bounded task; evaluate it by the checks rather than assuming a model guarantees
 correctness. Request a focused review of the API boundary and process lifecycle after
 T03. No automatic multi-agent orchestration is required.
 
