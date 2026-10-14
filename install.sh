@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python_bin="${PYTHON:-python3}"
-install_root="${AHOY_INSTALL_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/ahoy-streamer-cli}"
+repo_url="https://github.com/oooAHOYooo/ahoy-streamer-cli.git"
+install_root="${XDG_DATA_HOME:-$HOME/.local/share}/ahoy-streamer-cli"
 local_bin="$HOME/.local/bin"
+python_bin="${PYTHON:-python3}"
 
 fail() {
     printf 'ahoy-streamer installer: %s\n' "$*" >&2
@@ -20,116 +21,250 @@ install_with_system_privileges() {
     fi
 }
 
+confirm_system_packages() {
+    local manager="$1"
+    shift
+    local packages="$*"
+    if [ "${AHOY_INSTALL_ALLOW_SYSTEM_PACKAGES:-}" = "1" ]; then
+        printf 'Using AHOY_INSTALL_ALLOW_SYSTEM_PACKAGES=1 to install: %s\n' "$packages"
+        return
+    fi
+    [ -r /dev/tty ] || fail "System packages are needed: $packages. Rerun in an interactive terminal, or set AHOY_INSTALL_ALLOW_SYSTEM_PACKAGES=1."
+    printf 'This installer needs system packages: %s (%s).\n' "$packages" "$manager"
+    printf 'Install them now? [Y/n] '
+    local answer=""
+    IFS= read -r answer </dev/tty || fail "Could not read your package-install choice."
+    case "$answer" in
+        n|N|no|NO|No) fail "Cancelled; no system packages were installed." ;;
+    esac
+}
+
 install_linux_bootstrap() {
+    local need_git="$1" need_python="$2" need_venv="$3"
+    local manager="" distro_id=""
+    local -a packages=()
+
     if command -v omarchy >/dev/null 2>&1; then
-        omarchy pkg add git python python-pip
+        manager="Omarchy"
+        if [ "$need_git" = 1 ]; then packages+=(git); fi
+        if [ "$need_python" = 1 ]; then packages+=(python); fi
+        if [ "$need_venv" = 1 ] || [ "$need_python" = 1 ]; then
+            packages+=(python-pip)
+        fi
+        confirm_system_packages "$manager" "${packages[@]}"
+        omarchy pkg add "${packages[@]}"
         return
     fi
 
     if [ -r /etc/os-release ]; then
         # shellcheck disable=SC1091
         . /etc/os-release
-    else
-        ID=""
+        distro_id="${ID:-}"
     fi
-
-    case "${ID:-}" in
+    case "$distro_id" in
         arch|manjaro|endeavouros)
-            install_with_system_privileges pacman -S --needed git python python-pip
+            manager="pacman"
+            if [ "$need_git" = 1 ]; then packages+=(git); fi
+            if [ "$need_python" = 1 ]; then packages+=(python); fi
+            if [ "$need_venv" = 1 ] || [ "$need_python" = 1 ]; then
+                packages+=(python-pip)
+            fi
+            confirm_system_packages "$manager" "${packages[@]}"
+            install_with_system_privileges pacman -S --needed "${packages[@]}"
             ;;
         debian|ubuntu|linuxmint|pop)
+            manager="apt"
+            if [ "$need_git" = 1 ]; then packages+=(git); fi
+            if [ "$need_python" = 1 ]; then packages+=(python3); fi
+            if [ "$need_venv" = 1 ] || [ "$need_python" = 1 ]; then
+                packages+=(python3-venv python3-pip)
+            fi
+            confirm_system_packages "$manager" "${packages[@]}"
             install_with_system_privileges apt-get update
-            install_with_system_privileges apt-get install -y git python3 python3-venv python3-pip
+            install_with_system_privileges apt-get install -y "${packages[@]}"
             ;;
         fedora|rhel|centos|rocky|almalinux)
-            install_with_system_privileges dnf install -y git python3 python3-pip
+            manager="dnf"
+            if [ "$need_git" = 1 ]; then packages+=(git); fi
+            if [ "$need_python" = 1 ]; then packages+=(python3); fi
+            if [ "$need_venv" = 1 ] || [ "$need_python" = 1 ]; then
+                packages+=(python3-pip)
+            fi
+            confirm_system_packages "$manager" "${packages[@]}"
+            install_with_system_privileges dnf install -y "${packages[@]}"
             ;;
         opensuse*|sles)
-            install_with_system_privileges zypper --non-interactive install git python3 python3-pip
+            manager="zypper"
+            if [ "$need_git" = 1 ]; then packages+=(git); fi
+            if [ "$need_python" = 1 ]; then packages+=(python3); fi
+            if [ "$need_venv" = 1 ] || [ "$need_python" = 1 ]; then
+                packages+=(python3-pip)
+            fi
+            confirm_system_packages "$manager" "${packages[@]}"
+            install_with_system_privileges zypper --non-interactive install "${packages[@]}"
             ;;
         *)
-            fail "Git or Python's venv/pip support is missing. Install git and your Linux distribution's Python venv/pip packages, then rerun this installer."
+            fail "Missing Git or Python venv support. Install those with your Linux distribution's package manager, then rerun."
             ;;
     esac
 }
 
-if ! command -v "$python_bin" >/dev/null 2>&1; then
-    printf 'Python is missing; installing Linux prerequisites.\n'
-    install_linux_bootstrap
-fi
-command -v "$python_bin" >/dev/null 2>&1 || fail "Python 3.11 or newer is required (could not find $python_bin)."
-"$python_bin" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' || \
-    fail "Python 3.11 or newer is required."
+probe_venv() {
+    local probe_dir
+    probe_dir="$(mktemp -d "${TMPDIR:-/tmp}/ahoy-streamer-preflight.XXXXXX")" || return 1
+    if "$python_bin" -m venv "$probe_dir/venv" >/dev/null 2>&1 && \
+       "$probe_dir/venv/bin/python" -m pip --version >/dev/null 2>&1; then
+        rm -rf -- "$probe_dir"
+        return 0
+    fi
+    rm -rf -- "$probe_dir"
+    return 1
+}
 
+check_network() {
+    local url="$1" label="$2"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSIL --connect-timeout 5 --max-time 10 "$url" >/dev/null 2>&1 && return
+    elif command -v wget >/dev/null 2>&1; then
+        wget --spider --quiet --timeout=10 "$url" >/dev/null 2>&1 && return
+    elif command -v "$python_bin" >/dev/null 2>&1; then
+        "$python_bin" -c 'import sys; from urllib.request import Request, urlopen; req=Request(sys.argv[1], headers={"User-Agent":"ahoy-streamer-installer"}); response=urlopen(req, timeout=10); response.read(1); response.close()' "$url" >/dev/null 2>&1 && return
+    else
+        fail "Cannot check access to $label; install curl, wget, or Python and rerun."
+    fi
+    fail "Cannot reach $label. Check your internet connection or proxy, then rerun."
+}
+
+printf '[1/5] Checking Linux, Python, and install prerequisites...\n'
 arch="$(uname -m)"
 case "$arch" in
     x86_64|aarch64) ;;
     *) fail "Linux video wheels are supported on x86_64 and aarch64, not $arch." ;;
 esac
 
-# Running ./install.sh from a checkout installs that checkout. Piping this script
-# into bash instead installs the public main branch under the user's data directory.
 script_path="${BASH_SOURCE[0]:-}"
 script_dir=""
 if [ -n "$script_path" ] && [ "$script_path" != "-" ] && [ -f "$script_path" ]; then
     script_dir="$(cd -- "$(dirname -- "$script_path")" && pwd)"
 fi
-
+local_install=0
 if [ -n "$script_dir" ] && [ -f "$script_dir/pyproject.toml" ]; then
+    local_install=1
     repo_dir="$script_dir"
 else
-    if ! command -v git >/dev/null 2>&1; then
-        printf 'Git is missing; installing Linux prerequisites.\n'
-        install_linux_bootstrap
+    repo_dir="$install_root"
+fi
+
+need_git=0
+if [ "$local_install" = 0 ] && ! command -v git >/dev/null 2>&1; then
+    need_git=1
+fi
+need_python=0
+need_venv=0
+if ! command -v "$python_bin" >/dev/null 2>&1; then
+    need_python=1
+    need_venv=1
+else
+    "$python_bin" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' || \
+        fail "Python 3.11 or newer is required; found $("$python_bin" --version 2>&1)."
+    if ! probe_venv; then
+        need_venv=1
+    fi
+fi
+
+printf '[2/5] Checking internet access...\n'
+if [ "$local_install" = 0 ]; then
+    check_network "https://github.com/oooAHOYooo/ahoy-streamer-cli" "GitHub"
+fi
+check_network "https://pypi.org/simple/opencv-python-headless/" "PyPI"
+
+launcher="$local_bin/ahoy-streamer"
+player="$repo_dir/.venv/bin/ahoy-streamer"
+uninstaller="$local_bin/ahoy-streamer-uninstall"
+check_launcher_path() {
+    local path="$1" target="$2"
+    if [ -e "$path" ] && [ ! -L "$path" ]; then
+        fail "Refusing to overwrite an existing file: $path"
+    fi
+    if [ -L "$path" ] && [ "$(readlink -m -- "$path")" != "$(readlink -m -- "$target")" ]; then
+        fail "A different launcher already exists at $path."
+    fi
+}
+check_launcher_path "$launcher" "$player"
+if [ "$local_install" = 0 ]; then
+    check_launcher_path "$uninstaller" "$install_root/uninstall.sh"
+    if [ -e "$install_root" ] && [ ! -d "$install_root/.git" ]; then
+        fail "Install directory already exists and is not an Ahoy Streamer checkout: $install_root"
     fi
     if [ -d "$install_root/.git" ]; then
         origin="$(git -C "$install_root" remote get-url origin)"
-        [ "$origin" = "https://github.com/oooAHOYooo/ahoy-streamer-cli.git" ] || \
-            fail "Existing install has an unexpected Git origin: $origin"
+        [ "$origin" = "$repo_url" ] || fail "Existing install has an unexpected Git origin: $origin"
         branch="$(git -C "$install_root" branch --show-current)"
-        [ "$branch" = "main" ] || fail "Existing install is on '$branch', not main."
+        [ "$branch" = main ] || fail "Existing install is on '$branch', not main."
         [ -z "$(git -C "$install_root" status --porcelain)" ] || \
             fail "Existing install has local changes; review them before rerunning the installer."
+    fi
+else
+    [ -w "$repo_dir" ] || fail "Source checkout is not writable: $repo_dir"
+fi
+
+if [ "$need_git" = 1 ] || [ "$need_python" = 1 ] || [ "$need_venv" = 1 ]; then
+    install_linux_bootstrap "$need_git" "$need_python" "$need_venv"
+fi
+command -v "$python_bin" >/dev/null 2>&1 || fail "Python is still unavailable; install Python 3.11+ and rerun."
+"$python_bin" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' || \
+    fail "The installed Python is older than 3.11."
+probe_venv || fail "Python venv/pip setup is still unavailable. Install your distribution's Python venv package and rerun."
+if [ "$local_install" = 0 ]; then
+    command -v git >/dev/null 2>&1 || fail "Git is still unavailable; install Git and rerun."
+fi
+
+if [ "$local_install" = 0 ]; then
+    printf '[3/5] Getting the latest app source...\n'
+    if [ -d "$install_root/.git" ]; then
         git -C "$install_root" pull --ff-only origin main
     elif [ -e "$install_root" ]; then
         fail "Install directory already exists and is not an Ahoy Streamer checkout: $install_root"
     else
         mkdir -p "$(dirname -- "$install_root")"
-        git clone --depth 1 --branch main \
-            https://github.com/oooAHOYooo/ahoy-streamer-cli.git "$install_root"
+        git clone --depth 1 --branch main "$repo_url" "$install_root"
     fi
-    repo_dir="$install_root"
+else
+    printf '[3/5] Using this source checkout...\n'
 fi
 
 venv_dir="$repo_dir/.venv"
-if ! "$python_bin" -m venv "$venv_dir"; then
-    printf 'Python venv/pip support is missing; installing the Linux bootstrap package.\n'
-    install_linux_bootstrap
-    if [ -x "$venv_dir/bin/python" ]; then
-        "$python_bin" -m venv --upgrade "$venv_dir"
-    else
-        "$python_bin" -m venv "$venv_dir"
-    fi
-fi
-
-"$venv_dir/bin/python" -m pip install --editable "$repo_dir"
+printf '[4/5] Installing the app and video dependencies...\n'
+"$python_bin" -m venv "$venv_dir"
+"$venv_dir/bin/python" -m pip install --disable-pip-version-check --editable "$repo_dir"
 
 mkdir -p "$local_bin"
-launcher="$local_bin/ahoy-streamer"
-player="$venv_dir/bin/ahoy-streamer"
-if [ -e "$launcher" ] && [ ! -L "$launcher" ]; then
-    fail "Refusing to overwrite an existing file: $launcher"
-fi
-if [ -L "$launcher" ] && [ "$(readlink -f -- "$launcher")" != "$(readlink -f -- "$player")" ]; then
-    fail "A different ahoy-streamer launcher already exists at $launcher; move it aside and rerun."
-fi
 ln -sfn "$player" "$launcher"
 
-printf '\nInstalled ahoy-streamer with Linux video support.\n'
+if [ "$local_install" = 0 ]; then
+    ln -sfn "$repo_dir/uninstall.sh" "$uninstaller"
+fi
+
+printf '[5/5] Checking playback readiness...\n'
+doctor_status=0
+if doctor_json="$("$player" doctor --json 2>/dev/null)"; then
+    :
+else
+    doctor_status=$?
+fi
+if [ -n "${doctor_json:-}" ]; then
+    printf '%s\n' "$doctor_json" | "$venv_dir/bin/python" -c 'import json,sys; d=json.load(sys.stdin).get("data",{}); print("  Terminal video: " + ("ready" if d.get("video_backend") else "unavailable")); print("  Native audio: " + ("ready" if d.get("audio_ready") else "browser fallback")); print("  Video soundtrack (mpv): " + ("ready" if d.get("mpv_available") else "optional, not installed"))'
+else
+    printf '  Playback check failed (status %s); run "%s doctor" for details.\n' "$doctor_status" "$launcher"
+fi
+
+printf '\nInstallation complete.\nStart: %s\n' "$launcher"
 case ":${PATH:-}:" in
-    *":$local_bin:"*) printf 'Run it with: ahoy-streamer\n' ;;
-    *) printf 'Run it with: %s\nAdd %s to PATH to use the short command.\n' "$launcher" "$local_bin" ;;
+    *":$local_bin:"*) printf 'Or use: ahoy-streamer\n' ;;
 esac
+if [ "$local_install" = 0 ]; then
+    printf 'Uninstall later: %s\n' "$uninstaller"
+fi
 if ! command -v mpv >/dev/null 2>&1; then
-    printf 'mpv is not installed; terminal video will be silent. Install mpv with your Linux package manager for video soundtracks.\n'
+    printf 'Video soundtracks need mpv; terminal video works without it.\n'
 fi

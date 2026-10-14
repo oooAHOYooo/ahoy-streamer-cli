@@ -40,9 +40,15 @@ curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/ahoy-streamer-cli/main/i
 
 The installer fetches the latest `main`, creates an isolated Python environment with the
 OpenCV video decoder, and adds `ahoy-streamer` to `~/.local/bin`. If Git, Python, or Python's
-venv tools are missing, it installs those prerequisites through Omarchy or the detected Linux
-package manager. Once `~/.local/bin` is on `PATH`, you can use the shorter `ahoy-streamer`
-command.
+venv tools are missing, it asks before installing those prerequisites through Omarchy or the
+detected Linux package manager. It checks internet access first, reports video/audio readiness,
+and prints the exact launch and uninstall commands. Rerun the installer to update; it stops
+without changing a managed install that has local edits. Once `~/.local/bin` is on `PATH`, you
+can use the shorter `ahoy-streamer` command.
+
+To remove a one-command install later, run `~/.local/bin/ahoy-streamer-uninstall`. It confirms
+before deleting the app and its virtual environment; operating-system packages are left alone.
+For automated installs, run `curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/ahoy-streamer-cli/main/install.sh | AHOY_INSTALL_ALLOW_SYSTEM_PACKAGES=1 bash` to allow required system prerequisites without the interactive prompt. The package manager may still require sudo access.
 
 To install from a checkout instead:
 

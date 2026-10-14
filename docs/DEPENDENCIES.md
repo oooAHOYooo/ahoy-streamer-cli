@@ -7,9 +7,12 @@ On Linux, install with `curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/
 or run `./install.sh` from a checkout. The installer creates an isolated `.venv`, installs
 the project so the declared OpenCV decoder is present, and adds a launcher under
 `~/.local/bin`. If Git, Python, or the base Python's venv/pip bootstrap is missing, it installs the
-required OS package through Omarchy or the detected distribution package manager. This OS
-bootstrap is separate from `pip install`. `mpv` remains an optional OS package for video
-soundtracks.
+required OS package through Omarchy or the detected distribution package manager, after asking
+the user. It preflights architecture, network access, and venv/pip support, then runs `doctor`
+to summarize playback readiness. Re-running updates a clean managed checkout; local edits stop
+the update. `~/.local/bin/ahoy-streamer-uninstall` removes the managed checkout and virtual
+environment after confirmation but leaves OS packages installed. This OS bootstrap is separate
+from `pip install`. `mpv` remains an optional OS package for video soundtracks.
 
 - `miniaudio>=1.71,<2` (MIT): native audio output and streaming decode of MP3, WAV, FLAC,
   and Vorbis. URLs are identified by extension or HTTP content type; extensionless signed URLs
