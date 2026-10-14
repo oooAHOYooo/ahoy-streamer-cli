@@ -126,7 +126,8 @@ the Python package does not run privileged or package-manager commands during `p
 - Categories are immediately visible in the first view; avoid hidden arrow-only
   discovery or modal navigation for the primary destinations.
 - `q` exits, `/` searches, arrows or `j/k` move selection, Enter opens/plays,
-  Space starts the selected item when idle and pauses/resumes controllable playback.
+  Space starts the selected item when idle, pauses/resumes it when it is already current, and
+  switches to a different selected item by stopping TUI-owned playback first.
   ASCII video accepts Space to pause/resume, Left/Right to seek by ten seconds, Home/End to jump,
   and `q` to return. A bare Escape must not exit video; CSI/SS3 and Windows extended-key arrow
   sequences are normalized into seek/navigation controls. If a selected item is currently

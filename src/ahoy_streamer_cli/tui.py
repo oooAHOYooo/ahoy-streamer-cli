@@ -209,11 +209,18 @@ def run(stdscr):
                 if item["type"] in {"video", "tv_program", "event_video"}:
                     play_selected(stdscr, force_window=True)
             elif key == ord(" ") and items:
-                if session.current and session.external:
-                    message = "Playback is outside the TUI · use its controls"
-                elif session.current:
-                    message = "Playback paused/resumed" if session.toggle_pause() else "This player has no pause control"
+                chosen = items[selected]
+                if session.current and session.current.get("id") == chosen.get("id"):
+                    if session.external:
+                        message = "Playback is outside the TUI · use its controls"
+                    else:
+                        message = "Playback paused/resumed" if session.toggle_pause() else "This player has no pause control"
+                elif session.current and session.external:
+                    message = "Close the external player before starting another item"
                 else:
+                    # Space on a different selection means switch playback. Stop the old
+                    # owned audio session before handing the terminal to ASCII video.
+                    session.stop()
                     play_selected(stdscr)
             elif key == ord("x"):
                 was_external = session.external

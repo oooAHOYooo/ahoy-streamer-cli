@@ -51,6 +51,7 @@ class Session:
 
     def stop(self):
         self.stopped = True
+        self.current = None
 
 
 class TuiPlaybackTests(unittest.TestCase):
@@ -64,6 +65,27 @@ class TuiPlaybackTests(unittest.TestCase):
 
         self.assertEqual(Session.instance.started, [item])
         self.assertEqual(Session.instance.toggles, 1)
+        self.assertTrue(Session.instance.stopped)
+
+    def test_space_switches_from_paused_song_to_selected_video(self):
+        song = {"id": "music:1", "type": "music", "title": "Song", "creator": "Artist"}
+        video = {"id": "video:2", "type": "video", "title": "Video", "media_url": "https://media.test/video.mp4"}
+        def section_items(section):
+            return {"home": [song], "music": [song], "video": [video]}.get(section, [])
+        screen = Screen((ord(" "), ord(" "), tui.curses.KEY_RIGHT,
+                         tui.curses.KEY_RIGHT, ord(" "), ord("q")))
+        with patch.object(tui.curses, "curs_set"), \
+             patch.object(tui.curses, "def_prog_mode"), \
+             patch.object(tui.curses, "endwin"), \
+             patch.object(tui.curses, "reset_prog_mode"), \
+             patch.object(tui.catalog, "section_items", side_effect=section_items), \
+             patch.object(tui.player, "PlayerSession", Session), \
+             patch.object(tui.player, "play", return_value="ascii") as play:
+            tui.run(screen)
+
+        self.assertEqual(Session.instance.started, [song])
+        self.assertEqual(Session.instance.toggles, 1)
+        play.assert_called_once_with(video, "ascii", require_tty=True)
         self.assertTrue(Session.instance.stopped)
 
 
