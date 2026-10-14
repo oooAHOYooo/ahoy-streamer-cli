@@ -85,21 +85,39 @@ No network calls at import time. No new runtime dependency without a concrete ne
 ## Playback
 
 Audio uses miniaudio's bundled native library and a streaming HTTPS response adapter.
-Supported direct suffixes are MP3, WAV, FLAC, OGG/OGA Vorbis. HLS/playlists and unknown
-suffixes fail explicitly. Linux aarch64 skips miniaudio's runtime wheel and falls back to
-the system browser for audio. Seeking and radio track rollover are not implemented.
+Supported formats are MP3, WAV, FLAC, and OGG/OGA Vorbis. Signed URLs without file extensions
+are identified from their HTTP content type or passed to miniaudio's format sniffer. Known
+unsupported formats and playlists fall back to the system browser. Linux aarch64 skips
+miniaudio's runtime wheel and falls back to the system browser for audio. Seeking and radio
+track rollover are not implemented.
 The TUI owns audio output and supports pause/stop while it remains open.
 
 ASCII video uses OpenCV VideoCapture to decode/resize frames and a local monochrome luma
 renderer. Pin `opencv-python-headless==4.12.0.88`; do not float to OpenCV 5 without a fresh
 license audit. Windows/Linux install it normally; macOS uses browser video by default. On
-macOS 13+, the `ascii-video` extra enables ASCII. Do not install that extra on macOS 12 or
-earlier (including Big Sur): the PyPI wheel requires macOS 13 and older OpenCV wheel tags hid
-incompatible system-library minimums. If cv2 is missing, `--video=ascii` launches the browser
-and reports that fallback. The upstream project says its wheels bundle LGPLv2.1 FFmpeg. Keep
+macOS 13+, OpenCV installs by default based on Darwin kernel release 22+. macOS 12 and older
+skip OpenCV so a standard install remains usable; if cv2 is missing or cannot decode a stream,
+`--video=ascii` launches the browser and reports that fallback. The upstream project says its
+wheels bundle LGPLv2.1 FFmpeg. Keep
 the upstream license and third-party notices available to users; the dependency is installed
 as its own wheel. Frame rate is capped at 30 fps and frames are resized to terminal dimensions.
-ASCII mode is silent. Window mode prefers mpv and otherwise opens the browser, including audio.
+The terminal renderer defaults to 2×2 grayscale quadrants: each character cell carries four spatial
+samples, assigned to a two-tone 24-bit grayscale mosaic. `r` cycles through the optional
+grayscale/Braille hybrid, shaded ASCII, and Braille-only rendering.
+The image reserves one row for a compact seek timeline; playback state, position, and controls
+are displayed in the terminal window title. Left/Right seek by ten seconds and Home/End jump to the start or near
+the end when the stream decoder supports seeking. `v` toggles a subtle 3x3 soft-focus blend over
+the frame luminance. Position and duration may be approximate or
+unavailable for live/extensionless streams; report unsupported seeking in the title. Space
+pauses/resumes and `q` returns.
+Embedded video audio is played by system mpv in audio-only mode on macOS and Linux;
+pause, seek, and exit control that process along with the terminal renderer. Without mpv, the
+terminal renderer continues without audio and shows the limitation in the window title. Windows
+also displays terminal video without soundtrack because synchronized audio controls are not
+implemented there. Window mode prefers mpv and otherwise opens the browser.
+
+mpv is an operating-system dependency installed through platform-specific distribution channels;
+the Python package does not run privileged or package-manager commands during `pip install`.
 
 ## TUI behavior
 
@@ -108,7 +126,12 @@ ASCII mode is silent. Window mode prefers mpv and otherwise opens the browser, i
 - Categories are immediately visible in the first view; avoid hidden arrow-only
   discovery or modal navigation for the primary destinations.
 - `q` exits, `/` searches, arrows or `j/k` move selection, Enter opens/plays,
-  Space pauses only when playback control exists. Show actionable key hints.
+  Space starts the selected item when idle and pauses/resumes controllable playback.
+  ASCII video accepts Space to pause/resume, Left/Right to seek by ten seconds, Home/End to jump,
+  and `q` to return. A bare Escape must not exit video; CSI/SS3 and Windows extended-key arrow
+  sequences are normalized into seek/navigation controls. If a selected item is currently
+  playing outside the TUI (system browser), explain that playback must be controlled there.
+  Show actionable key hints.
 - TUI refreshes remain bounded, selection survives refresh when the item still exists,
   and network/player errors appear in the interface without a traceback.
 - TUI rendering is testable with a fake terminal; no full-screen UI in unit tests.

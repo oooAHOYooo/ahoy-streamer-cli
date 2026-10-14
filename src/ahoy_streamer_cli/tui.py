@@ -84,6 +84,41 @@ def run(stdscr):
         selected = 0
         message = f"{len(items)} matches for “{query}”" + (f" · unavailable: {', '.join(failures)}" if failures else "")
 
+    def play_selected(stdscr, force_window=False):
+        nonlocal message
+        if not items:
+            return
+        item = items[selected]
+        is_video = item.get("type") in {"video", "tv_program", "event_video"}
+        if is_video and not force_window:
+            try:
+                curses.def_prog_mode()
+                curses.endwin()
+                playback = player.play(item, "ascii", require_tty=True)
+                curses.reset_prog_mode()
+                stdscr.refresh()
+                message = ("ASCII video ended · Space pauses/resumes in the player · q returns"
+                           if playback == "ascii" else
+                           "ASCII decoding unavailable for this stream · opened it in your browser")
+            except Exception as e:
+                try:
+                    curses.reset_prog_mode()
+                    stdscr.refresh()
+                except curses.error:
+                    pass
+                message = str(e)
+            return
+        try:
+            result = session.start(item, mode="window")
+            if result == "background":
+                message = "Playing · Space pauses/resumes, x stops"
+            elif session.external:
+                message = "Opened outside the TUI · use the browser/player controls"
+            else:
+                message = "Playback started"
+        except Exception as e:
+            message = str(e)
+
     load()
     try:
         while True:
@@ -103,7 +138,7 @@ def run(stdscr):
             _line(stdscr, 16, 2, "↑/↓ browse", side - 4)
             _line(stdscr, 17, 2, "Enter details", side - 4)
             _line(stdscr, 18, 2, "p play · / search", side - 4)
-            _line(stdscr, 19, 2, "Space pause · x stop", side - 4)
+            _line(stdscr, 19, 2, "Space play/pause · x stop", side - 4)
             _line(stdscr, 20, 2, "q quit", side - 4)
 
             main_x = side + 2
@@ -168,40 +203,22 @@ def run(stdscr):
             elif key in (10, 13, curses.KEY_ENTER) and items:
                 detail = not detail
             elif key == ord("p") and items:
-                item = items[selected]
-                mode = "ascii" if item["type"] in {"video", "tv_program", "event_video"} else "window"
-                try:
-                    if mode == "ascii":
-                        curses.def_prog_mode()
-                        curses.endwin()
-                        playback = player.play(item, "ascii", require_tty=True)
-                        curses.reset_prog_mode()
-                        stdscr.refresh()
-                        message = ("ASCII decoder unavailable · opened video in your browser"
-                                   if playback == "browser-fallback" else "Video playback ended · use w for a player window")
-                    else:
-                        result = session.start(item, mode="window")
-                        message = "Playing · Space pauses, x stops" if result == "background" else "Opened in your system browser · controls are there"
-                except Exception as e:
-                    try:
-                        curses.reset_prog_mode()
-                        stdscr.refresh()
-                    except curses.error:
-                        pass
-                    message = str(e)
+                play_selected(stdscr)
             elif key == ord("w") and items:
                 item = items[selected]
                 if item["type"] in {"video", "tv_program", "event_video"}:
-                    try:
-                        session.start(item, mode="window")
-                        message = "Opened video in mpv or your system browser · controls are there"
-                    except Exception as e:
-                        message = str(e)
-            elif key == ord(" ") and session.current:
-                message = "Playback toggled" if session.toggle_pause() else "Player is no longer running"
+                    play_selected(stdscr, force_window=True)
+            elif key == ord(" ") and items:
+                if session.current and session.external:
+                    message = "Playback is outside the TUI · use its controls"
+                elif session.current:
+                    message = "Playback paused/resumed" if session.toggle_pause() else "This player has no pause control"
+                else:
+                    play_selected(stdscr)
             elif key == ord("x"):
+                was_external = session.external
                 session.stop()
-                message = "Playback stopped"
+                message = "Use the browser/player controls to stop external playback" if was_external else "Playback stopped"
     finally:
         session.stop()
 

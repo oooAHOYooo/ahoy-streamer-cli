@@ -109,7 +109,10 @@ def main():
         mode = getattr(args, "video", "ascii")
         playback = player.play(item, mode, require_tty=args.command == "watch")
         if playback == "browser-fallback":
-            print("ASCII decoder is unavailable; opened this video in the system browser.", file=sys.stderr)
+            fallback = ("ASCII decoding could not play this stream; opened it in the system browser."
+                        if args.command == "watch" else
+                        "Native audio could not decode this stream; opened it in the system browser.")
+            print(fallback, file=sys.stderr)
         return 0
     except LookupError as e:
         fail(e, "NOT_FOUND", 4, as_json)
