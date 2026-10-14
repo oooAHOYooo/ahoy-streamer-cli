@@ -2,13 +2,11 @@
 
 ## Hosted repository
 
-Created and pushed: https://github.com/oooAHOYooo/ahoy-streamer-cli (private).
-Local main tracks origin/main. GitHub CLI authentication works as oooAHOYooo;
-network sandbox restrictions can make an authentication check appear to fail.
-
-Private is an initial planning default; public visibility and a license should be
-selected deliberately before outreach. Do not assume this project inherits the
-platform's license. Do not publish to PyPI until package name ownership is checked.
+Created and pushed: https://github.com/oooAHOYooo/ahoy-streamer-cli (public for early testing).
+The `codex/streamer-tui-first-draft` branch contains the current runnable draft. The Python
+package is not published to PyPI. No license has been selected; choose one before accepting
+contributions or redistributing the code. Do not assume this project inherits the platform's
+license. Check package-name ownership before any PyPI release.
 
 ## Public launch after T05
 

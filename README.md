@@ -101,5 +101,6 @@ See `docs/HANDOFF.md` for a ready-to-use implementation prompt.
 
 GitHub: https://github.com/oooAHOYooo/ahoy-streamer-cli
 
-The repository is private while planning. Public release, package name availability, and license are
-release decisions, not completed work. See `docs/RELEASE.md`.
+The repository is public for early testing; the Python package is not published. No project license
+has been selected yet, so choose one before accepting contributions or redistributing the code.
+See `docs/RELEASE.md`.
