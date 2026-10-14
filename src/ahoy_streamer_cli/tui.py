@@ -25,6 +25,8 @@ def run(stdscr):
     session = player.PlayerSession()
     section_idx, selected, detail = 0, 0, False
     items, query = [], ""
+    typeahead = ""
+    typeahead_at = 0.0
     message = "Loading discovery…"
     section = NAV[section_idx][1]
 
@@ -137,13 +139,17 @@ def run(stdscr):
             _line(stdscr, 15, 2, "──────────────────", side - 4, curses.A_DIM)
             _line(stdscr, 16, 2, "↑/↓ browse", side - 4)
             _line(stdscr, 17, 2, "Enter details", side - 4)
-            _line(stdscr, 18, 2, "p play · / search", side - 4)
+            _line(stdscr, 18, 2, "type jump · / search", side - 4)
             _line(stdscr, 19, 2, "Space play/pause · x stop", side - 4)
-            _line(stdscr, 20, 2, "q quit", side - 4)
+            _line(stdscr, 20, 2, "Esc clear/quit", side - 4)
 
             main_x = side + 2
             main_w = max(1, w - main_x - 2)
-            _line(stdscr, 3, main_x, active.upper() + (f"  ·  {query}" if active == "Search" and query else ""), main_w, curses.A_BOLD)
+            header = active.upper() + (f"  ·  {query}" if active == "Search" and query else "")
+            if typeahead:
+                matches = _typeahead_matches(items, typeahead)
+                header += f"  ·  jump: {typeahead}  ({len(matches)})"
+            _line(stdscr, 3, main_x, header, main_w, curses.A_BOLD)
             list_w = max(1, min(56, main_w // 2 if main_w > 88 else main_w))
             visible = max(0, h - 10)
             start = max(0, selected - visible + 1)
@@ -169,7 +175,7 @@ def run(stdscr):
                     for n, field in enumerate(("date", "event_date", "category", "photo_count", "channel_name"), start=15):
                         if chosen.get(field) is not None:
                             _line(stdscr, n, dx, f"{field.replace('_', ' ').title()}  {chosen[field]}", dw)
-                    _line(stdscr, h - 7, dx, "p play · w window video", dw, curses.A_DIM)
+                    _line(stdscr, h - 7, dx, "Space play · w window video", dw, curses.A_DIM)
 
             if items and selected < len(items):
                 chosen = items[selected]
@@ -181,30 +187,55 @@ def run(stdscr):
             stdscr.refresh()
             key = stdscr.getch()
 
-            if key in (ord("q"), 27):
+            now = time.monotonic()
+            if now - typeahead_at > 1.0:
+                typeahead = ""
+            if 32 <= key <= 126 and (chr(key).isalpha() or (typeahead and key == ord(" "))):
+                char = chr(key).casefold()
+                candidate = typeahead + char if now - typeahead_at <= 1.0 else char
+                matches = _typeahead_matches(items, candidate)
+                # Space remains playback; all alphabetic keys build a live jump.
+                # q/r/w/x retain their shortcut when no displayed item matches.
+                if typeahead or char not in {"q", "r", "w", "x"} or matches:
+                    typeahead = candidate
+                    typeahead_at = now
+                    if matches:
+                        selected = matches[0]
+                    continue
+            if key in (curses.KEY_BACKSPACE, 8, 127) and typeahead:
+                typeahead = typeahead[:-1]
+                typeahead_at = now
+                matches = _typeahead_matches(items, typeahead)
+                if matches:
+                    selected = matches[0]
+            elif key == 27 and typeahead:
+                typeahead = ""
+            elif key in (ord("q"), 27):
                 return
-            if key in (curses.KEY_UP, ord("k")) and items:
+            if key == curses.KEY_UP and items:
+                typeahead = ""
                 selected = (selected - 1) % len(items)
-            elif key in (curses.KEY_DOWN, ord("j")) and items:
+            elif key == curses.KEY_DOWN and items:
+                typeahead = ""
                 selected = (selected + 1) % len(items)
             elif key in (curses.KEY_LEFT, curses.KEY_RIGHT):
                 section_idx = (section_idx + (1 if key == curses.KEY_RIGHT else -1)) % len(NAV)
-                query, detail, selected = "", False, 0
+                query, detail, selected, typeahead = "", False, 0, ""
                 load()
             elif key in map(ord, "1234567890"):
-                section_idx = (int(chr(key)) % 10)
+                shortcut = int(chr(key))
+                section_idx = 9 if shortcut == 0 else shortcut - 1
+                typeahead = ""
                 query, detail, selected = "", False, 0
                 load()
-            elif key == ord("r"):
+            elif key in (ord("r"), curses.KEY_F5):
                 load()
             elif key == ord("/"):
                 search_now(stdscr, h, w)
                 detail = False
             elif key in (10, 13, curses.KEY_ENTER) and items:
                 detail = not detail
-            elif key == ord("p") and items:
-                play_selected(stdscr)
-            elif key == ord("w") and items:
+            elif key in (ord("w"), 23) and items:
                 item = items[selected]
                 if item["type"] in {"video", "tv_program", "event_video"}:
                     play_selected(stdscr, force_window=True)
@@ -222,12 +253,28 @@ def run(stdscr):
                     # owned audio session before handing the terminal to ASCII video.
                     session.stop()
                     play_selected(stdscr)
-            elif key == ord("x"):
+            elif key in (ord("x"), 24):
                 was_external = session.external
                 session.stop()
                 message = "Use the browser/player controls to stop external playback" if was_external else "Playback stopped"
     finally:
         session.stop()
+
+
+def _typeahead_matches(items, query):
+    """Return current-section item indexes matching a title/creator prefix."""
+    needle = query.casefold().strip()
+    if not needle:
+        return list(range(len(items)))
+    prefix, word_match = [], []
+    for index, item in enumerate(items):
+        fields = (item.get("title") or "", item.get("creator") or "")
+        if any(field.casefold().startswith(needle) for field in fields):
+            prefix.append(index)
+        elif any(word.casefold().startswith(needle)
+                 for field in fields for word in field.split()):
+            word_match.append(index)
+    return prefix + word_match
 
 
 def _radio_now(items):

@@ -9,6 +9,7 @@ from ahoy_streamer_cli import tui
 class Screen:
     def __init__(self, keys):
         self.keys = iter(keys)
+        self.lines = []
 
     def erase(self):
         pass
@@ -17,7 +18,7 @@ class Screen:
         return (48, 111)
 
     def addnstr(self, *args):
-        pass
+        self.lines.append(str(args[2]))
 
     def refresh(self):
         pass
@@ -55,6 +56,30 @@ class Session:
 
 
 class TuiPlaybackTests(unittest.TestCase):
+    def test_number_three_opens_videos_section(self):
+        screen = Screen((ord("3"), ord("q")))
+        with patch.object(tui.curses, "curs_set"), \
+             patch.object(tui.catalog, "section_items", return_value=[]) as load, \
+             patch.object(tui.player, "PlayerSession", Session):
+            tui.run(screen)
+
+        self.assertEqual([call.args[0] for call in load.call_args_list], ["home", "video"])
+        self.assertIn("VIDEOS", screen.lines)
+
+    def test_typing_title_jumps_to_matching_current_section_item(self):
+        items = [
+            {"id": "music:1", "type": "music", "title": "Blue Monday", "creator": "New Order"},
+            {"id": "music:2", "type": "music", "title": "Silver Spoon", "creator": "Artist"},
+        ]
+        screen = Screen((ord("2"), ord("s"), ord("i"), 27, 27))
+        with patch.object(tui.curses, "curs_set"), \
+             patch.object(tui.catalog, "section_items", return_value=items), \
+             patch.object(tui.player, "PlayerSession", Session):
+            tui.run(screen)
+
+        self.assertTrue(any("Selected  Silver Spoon" in line for line in screen.lines))
+        self.assertTrue(any("jump: si" in line for line in screen.lines))
+
     def test_space_starts_selected_audio_then_toggles_pause(self):
         item = {"id": "music:1", "type": "music", "title": "Sample", "creator": "Artist"}
         screen = Screen((ord(" "), ord(" "), ord("q")))

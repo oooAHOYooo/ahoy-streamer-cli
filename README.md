@@ -69,9 +69,12 @@ project; see the [OpenCV-Python third-party license notices](https://github.com/
 when using or redistributing its wheel. The dependency is installed as a separate PyPI wheel.
 See [dependency and license notes](docs/DEPENDENCIES.md) for platform and redistribution details.
 Use number keys 0–9 (Home through
-Search), arrow keys or `j`/`k` to browse, Enter for details, `p` to play, and Space to play the
-selected item, pause/resume it while it remains selected, or switch to a different selection and
-stop TUI-owned playback. Use `x` to stop, `/` to search, `r` to refresh, and `q` to quit. Data sections need a network
+Search), arrow keys to browse, Enter for details, and Space to play the selected item,
+pause/resume it while it remains selected, or switch to a different selection and stop TUI-owned
+playback. Type a title or creator prefix to jump to its first match in the current section; press
+Backspace to edit. Escape clears the jump; press it again to quit. Use `x` or Ctrl-X to stop, `/` to
+search all catalogs, `r` or F5 to refresh, and `q` to quit when no displayed title/creator starts
+with q. Data sections need a network
 connection. AHOY TV currently displays the public channel libraries; the API does not
 provide authoritative slot timing, so the CLI does not claim synchronized live-TV parity.
 
