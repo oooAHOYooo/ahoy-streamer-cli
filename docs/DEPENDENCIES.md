@@ -3,6 +3,13 @@
 The playback extras are ordinary PyPI dependencies; this project does not embed their
 native libraries or FFmpeg binaries in its own wheel.
 
+On Linux, run `./install.sh` from the checkout. It creates an isolated `.venv` and installs
+the project so the declared OpenCV decoder is present for terminal video. If the base Python
+cannot create a venv because pip bootstrap support is missing, the installer adds the
+distribution's Python pip/venv package; on Omarchy it uses `omarchy pkg add python-pip`.
+This OS bootstrap is separate from `pip install` and uses the distro package manager only
+when needed. `mpv` remains an optional OS package for video soundtracks.
+
 - `miniaudio>=1.71,<2` (MIT): native audio output and streaming decode of MP3, WAV, FLAC,
   and Vorbis. URLs are identified by extension or HTTP content type; extensionless signed URLs
   are offered to miniaudio's format sniffer. Unsupported containers/codecs fall back to the

@@ -34,8 +34,29 @@ Usage:
 ```sh
 git clone --branch codex/streamer-tui-first-draft --single-branch https://github.com/oooAHOYooo/ahoy-streamer-cli.git
 cd ahoy-streamer-cli
+./install.sh                         # Linux: installs into .venv, including OpenCV video support
+.venv/bin/ahoy-streamer              # open the terminal listening room
+.venv/bin/ahoy-streamer search poets --json
+.venv/bin/ahoy-streamer show music:song_1 --json
+.venv/bin/ahoy-streamer play music:song_1
+.venv/bin/ahoy-streamer watch video:example --video=ascii
+.venv/bin/ahoy-streamer doctor --json
+```
+
+On macOS, install into a Python virtual environment:
+
+```sh
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -e .
+ahoy-streamer
+```
+
+On Windows PowerShell:
+
+```powershell
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
 python -m pip install -e .
 ahoy-streamer                         # open the terminal listening room
 ahoy-streamer search poets --json
@@ -45,11 +66,18 @@ ahoy-streamer watch video:example --video=ascii
 ahoy-streamer doctor --json
 ```
 
+On Linux, `install.sh` creates an isolated `.venv` and installs the project dependencies,
+including the pinned OpenCV video decoder. If Python's venv/pip bootstrap is missing, it
+installs that small OS package through Omarchy on Omarchy, or through the detected Linux
+package manager (using `sudo` when needed). It does not install `mpv`; that remains optional
+for video soundtracks. On macOS and Windows, create the virtual environment and install as
+shown above.
+
 Standalone audio uses the PyPI miniaudio runtime dependency and does not require Homebrew or
 system mpv. Audio embedded in a video uses system mpv (`brew install mpv` on macOS) to
 play alongside terminal video. Without mpv, terminal video still plays without audio. The Python
-package does not install operating-system packages automatically: mpv is distributed separately
-for each OS/package manager, and install-time system changes require platform-specific installers.
+package itself does not install operating-system packages. The Linux installer only bootstraps
+Python venv/pip support when needed; `mpv` is distributed separately through each OS/package manager.
 See the [official mpv installation guide](https://mpv.io/installation/) for Windows, macOS, and Linux.
 Direct MP3/WAV/FLAC/Vorbis URLs play inside the TUI; signed URLs without extensions are decoded
 using their response content type or format sniffing. Unsupported formats such as AAC/M4A open
