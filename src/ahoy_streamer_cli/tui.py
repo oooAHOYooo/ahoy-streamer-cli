@@ -87,20 +87,33 @@ def run(stdscr):
         message = f"{len(items)} matches for “{query}”" + (f" · unavailable: {', '.join(failures)}" if failures else "")
 
     def play_selected(stdscr, force_window=False):
-        nonlocal message
+        nonlocal message, selected
         if not items:
             return
         item = items[selected]
         is_video = item.get("type") in {"video", "tv_program", "event_video"}
         if is_video and not force_window:
+            video_indexes = [index for index, candidate in enumerate(items)
+                             if candidate.get("type") in {"video", "tv_program", "event_video"}]
+            browse_items = [items[index] for index in video_indexes]
+            browse_index = video_indexes.index(selected)
             try:
                 curses.def_prog_mode()
                 curses.endwin()
-                playback = player.play(item, "ascii", require_tty=True)
+                while True:
+                    playback = player.play(item, "ascii", require_tty=True,
+                                           browse_items=browse_items, browse_index=browse_index)
+                    if isinstance(playback, tuple) and playback[0] == "ascii":
+                        action, browse_index = playback[1]
+                        selected = video_indexes[browse_index]
+                        if action == "select" and items[selected].get("id") != item.get("id"):
+                            item = items[selected]
+                            continue
+                    break
                 curses.reset_prog_mode()
                 stdscr.refresh()
                 message = ("ASCII video ended · Space pauses/resumes in the player · q returns"
-                           if playback == "ascii" else
+                           if playback == "ascii" or isinstance(playback, tuple) else
                            "ASCII decoding unavailable for this stream · opened it in your browser")
             except Exception as e:
                 try:

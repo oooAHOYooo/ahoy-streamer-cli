@@ -110,8 +110,25 @@ class TuiPlaybackTests(unittest.TestCase):
 
         self.assertEqual(Session.instance.started, [song])
         self.assertEqual(Session.instance.toggles, 1)
-        play.assert_called_once_with(video, "ascii", require_tty=True)
+        play.assert_called_once_with(video, "ascii", require_tty=True,
+                                     browse_items=[video], browse_index=0)
         self.assertTrue(Session.instance.stopped)
+
+    def test_video_browser_switches_and_keeps_browsed_selection(self):
+        videos = [{"id": f"video:{n}", "type": "video", "title": f"Video {n}",
+                   "media_url": f"https://media.test/{n}.mp4"} for n in range(2)]
+        screen = Screen((ord("3"), ord(" "), ord("q")))
+        with patch.object(tui.curses, "curs_set"), \
+             patch.object(tui.curses, "def_prog_mode"), \
+             patch.object(tui.curses, "endwin"), \
+             patch.object(tui.curses, "reset_prog_mode"), \
+             patch.object(tui.catalog, "section_items", return_value=videos), \
+             patch.object(tui.player, "PlayerSession", Session), \
+             patch.object(tui.player, "play", side_effect=[("ascii", ("select", 1)),
+                                                          ("ascii", ("back", 1))]) as play:
+            tui.run(screen)
+        self.assertEqual([call.args[0] for call in play.call_args_list], videos)
+        self.assertTrue(any("Selected  Video 1" in line for line in screen.lines))
 
 
 if __name__ == "__main__":

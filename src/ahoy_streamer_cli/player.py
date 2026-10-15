@@ -1,11 +1,13 @@
 """Small portable audio adapter plus optional video launchers."""
 import shutil
 import os
+import re
 import select
 import signal
 import subprocess
 import sys
 import time
+import unicodedata
 from contextlib import contextmanager
 import urllib.request
 import urllib.error
@@ -137,7 +139,7 @@ class AudioSession:
             self.closed = True
 
 
-def play(item, mode="ascii", require_tty=False):
+def play(item, mode="ascii", require_tty=False, browse_items=None, browse_index=0):
     url = item.get("media_url")
     if not url or not url.startswith("https://"):
         raise RuntimeError("this item has no safe HTTPS playback URL")
@@ -168,8 +170,10 @@ def play(item, mode="ascii", require_tty=False):
         if require_tty and not sys.stdout.isatty():
             raise OSError("ASCII video needs a terminal; use --video=window")
         try:
-            _play_ascii_video(url, duration=item.get("duration_seconds"), audio_url=item.get("audio_url"))
-            return "ascii"
+            choice = _play_ascii_video(url, duration=item.get("duration_seconds"),
+                                       audio_url=item.get("audio_url"),
+                                       browse_items=browse_items, browse_index=browse_index)
+            return ("ascii", choice) if browse_items is not None else "ascii"
         except AsciiBackendMissing:
             if not webbrowser.open(url):
                 raise OSError("ASCII decoder is unavailable and the system browser could not open the media")
@@ -194,7 +198,7 @@ class AsciiBackendMissing(OSError):
     pass
 
 
-def _play_ascii_video(url, duration=None, audio_url=None):
+def _play_ascii_video(url, duration=None, audio_url=None, browse_items=None, browse_index=0):
     try:
         import cv2
     except Exception as exc:
@@ -222,18 +226,36 @@ def _play_ascii_video(url, duration=None, audio_url=None):
         has_audio = soundtrack.start()
         notice = "" if has_audio else soundtrack.status
         last_frame = None
+        browse_index = min(max(0, browse_index), len(browse_items) - 1) if browse_items else 0
+        playing_index = browse_index
+        browse_visible = browse_items is not None
+        badge_until = 0.0
+        last_terminal = None
+        last_badge_active = False
+        layout_dirty = False
         sys.stdout.write("\033[2J\033[H\033[?25l")
         sys.stdout.flush()
         with _terminal_keys() as read_keys:
             while True:
                 seek_requested = False
-                for key in read_keys():
+                keys = read_keys()
+                for key in keys:
                     if key == " ":
                         paused = not paused
                         if has_audio and not soundtrack.toggle_pause():
                             paused = not paused
                     elif key == "q":
-                        return
+                        return ("back", browse_index) if browse_items is not None else None
+                    elif key in {"up", "k"} and browse_items:
+                        browse_index = max(0, browse_index - 1)
+                    elif key in {"down", "j"} and browse_items:
+                        browse_index = min(len(browse_items) - 1, browse_index + 1)
+                    elif key in {"\r", "\n"} and browse_items and browse_index != playing_index:
+                        return ("select", browse_index)
+                    elif key in {"f", "\t"} and browse_items is not None:
+                        browse_visible = not browse_visible
+                        badge_until = time.monotonic() + 1.5
+                        layout_dirty = True
                     elif key in {"left", "h", "["}:
                         elapsed = max(0.0, elapsed - 10.0)
                         sought = capture.set(getattr(cv2, "CAP_PROP_POS_MSEC", 0), elapsed * 1000)
@@ -272,6 +294,13 @@ def _play_ascii_video(url, duration=None, audio_url=None):
                     elif key == "v":
                         soft_focus = not soft_focus
                         notice = "soft focus on" if soft_focus else "soft focus off"
+                terminal = shutil.get_terminal_size((80, 24))
+                terminal_size = (terminal.columns, terminal.lines)
+                badge_active = time.monotonic() < badge_until
+                if paused and last_frame is not None and not keys and not seek_requested \
+                        and terminal_size == last_terminal and badge_active == last_badge_active:
+                    time.sleep(0.05)
+                    continue
                 if paused and last_frame is not None and not seek_requested:
                     frame = last_frame
                 else:
@@ -286,13 +315,16 @@ def _play_ascii_video(url, duration=None, audio_url=None):
                 position_ms = capture.get(getattr(cv2, "CAP_PROP_POS_MSEC", 0))
                 if position_ms and position_ms > 0:
                     elapsed = position_ms / 1000.0
-                else:
+                elif not paused and not seek_requested:
                     elapsed += delay
-                terminal = shutil.get_terminal_size((80, 24))
                 max_width, max_height = max(1, terminal.columns - 1), max(1, terminal.lines - 1)
+                side_width = min(30, max(24, terminal.columns // 3)) if browse_visible and terminal.columns >= 72 else 0
+                video_width = max_width - side_width - (2 if side_width else 0)
+                browse_rows = min(5, max(2, terminal.lines // 4)) if browse_visible and not side_width else 0
+                video_height = max(1, max_height - browse_rows - (1 if browse_visible else 0))
                 source_height, source_width = frame.shape[:2]
-                cols = min(max_width, source_width)
-                rows = min(max_height, max(1, round(cols * source_height / max(1, source_width) * .5)))
+                cols = min(video_width, source_width)
+                rows = min(video_height, max(1, round(cols * source_height / max(1, source_width) * .5)))
                 if render_mode == "gray":
                     # Four independently sampled luminance points per character cell
                     # double the spatial detail of a conventional half-block renderer.
@@ -320,18 +352,41 @@ def _play_ascii_video(url, duration=None, audio_url=None):
                 state = "PAUSED" if paused else "PLAYING"
                 total = _time_label(duration) if duration else "--:--"
                 title = (f"AHOY VIDEO · {state} · {_time_label(elapsed)}/{total} · {render_mode} · "
-                         f"Space pause · ←/→ seek 10s · Home/End · r style · v focus · q back" +
+                         f"Space pause · ←/→ seek 10s · Home/End · r style · v focus · " +
+                         ("f/Tab full screen · ↑/↓ browse · Enter play · " if browse_visible else
+                          "f/Tab show videos · " if browse_items is not None else "") + "q back" +
                          (f" · {notice}" if notice else ""))
-                timeline = _video_timeline(elapsed, duration, max_width)
-                sys.stdout.write("\033]0;" + title + "\007\033[H" + picture + "\n" + timeline + "\033[J")
+                timeline = _video_timeline(elapsed, duration, video_width)
+                if browse_visible:
+                    picture = _video_browser_view(picture, timeline, browse_items, browse_index,
+                                                  side_width, video_width, browse_rows, max_height)
+                else:
+                    picture += "\n" + timeline
+                badge = ""
+                if badge_active:
+                    label = " BROWSE · ↑↓ choose · Enter play · f full " if browse_visible else \
+                            " FULL SCREEN · f show videos "
+                    badge = "\033[1;1H\033[7m" + label[:max_width] + "\033[0m"
+                # Clear on layout changes; a stable video view overwrites its own cells.
+                # Erasing the whole remainder of the screen on every frame makes many
+                # terminals repaint much more than the moving picture needs.
+                clear = "\033[2J" if (layout_dirty or terminal_size != last_terminal or
+                                      badge_active != last_badge_active) else ""
+                erase_rest = "\033[J" if browse_items is None else ""
+                sys.stdout.write("\033]0;" + title + "\007" + clear + "\033[H" +
+                                 picture + erase_rest + badge)
                 sys.stdout.flush()
                 rendered = True
+                layout_dirty = False
+                last_terminal = terminal_size
+                last_badge_active = badge_active
                 if not paused:
                     time.sleep(max(0, delay - (time.monotonic() - started)))
         if not rendered:
             raise AsciiBackendMissing("OpenCV decoded no video frames")
+        return ("back", browse_index) if browse_items is not None else None
     except KeyboardInterrupt:
-        pass
+        return ("back", browse_index) if browse_items is not None else None
     finally:
         capture.release()
         if "soundtrack" in locals():
@@ -532,14 +587,16 @@ def _decode_key_sequence(sequence):
     """Normalize common POSIX CSI/SS3 and Windows console arrow sequences."""
     if sequence.startswith("\x1b[") or sequence.startswith("\x1bO"):
         final = sequence[-1:]
-        if final in {"D", "C", "H", "F"}:
-            return {"D": "left", "C": "right", "H": "home", "F": "end"}[final]
+        if final in {"A", "B", "D", "C", "H", "F"}:
+            return {"A": "up", "B": "down", "D": "left", "C": "right",
+                    "H": "home", "F": "end"}[final]
         if sequence.startswith("\x1b[") and final == "~":
             code = sequence[2:-1].split(";", 1)[0]
             return {"1": "home", "7": "home", "4": "end", "8": "end"}.get(code)
         return None
     if sequence.startswith(("\x00", "\xe0")) and len(sequence) > 1:
-        return {"K": "left", "M": "right", "G": "home", "O": "end"}.get(sequence[-1])
+        return {"H": "up", "P": "down", "K": "left", "M": "right",
+                "G": "home", "O": "end"}.get(sequence[-1])
     return None
 
 
@@ -649,6 +706,37 @@ def _time_label(seconds):
         return "--:--"
     seconds = max(0, int(seconds))
     return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+
+def _video_browser_view(picture, timeline, items, selected, side_width, video_width,
+                        browse_rows, height):
+    """Keep the catalog visible while frames update, without trusting catalog text as ANSI."""
+    frame_lines = picture.split("\n")
+    if side_width:
+        count = max(1, height - 1)
+        start = min(max(0, selected - count // 2), max(0, len(items) - count))
+        labels = [_safe_video_label(f"VIDEOS ↑↓ Enter  {selected + 1}/{len(items)}", side_width)]
+        for index in range(start, min(len(items), start + count)):
+            marker = "▶ " if index == selected else "  "
+            title = _safe_video_label(items[index].get("title", ""), side_width - 2)
+            labels.append(marker + title)
+        lines = frame_lines + [timeline]
+        return "\n".join((lines[row] if row < len(lines) else "")
+                         + f"\033[{video_width + 3}G" + (labels[row] if row < len(labels) else "") + "\033[K"
+                         for row in range(min(height, max(len(lines), len(labels)))))
+    count = max(1, browse_rows - 1)
+    start = min(max(0, selected - count // 2), max(0, len(items) - count))
+    labels = [_safe_video_label(f"VIDEOS ↑↓ Enter  {selected + 1}/{len(items)}", video_width)]
+    for index in range(start, min(len(items), start + count)):
+        marker = "▶ " if index == selected else "  "
+        labels.append(marker + _safe_video_label(items[index].get("title", ""), video_width - 2))
+    return "\n".join(frame_lines + [timeline] + [label + "\033[K" for label in labels])
+
+
+def _safe_video_label(value, width):
+    without_csi = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", str(value))
+    clean = "".join(ch for ch in without_csi if unicodedata.category(ch)[0] != "C")
+    return clean[:max(0, width)]
 
 
 def _video_timeline(position, duration, width):

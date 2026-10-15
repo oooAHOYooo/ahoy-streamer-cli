@@ -20,6 +20,11 @@ samples, using two 24-bit gray shades to preserve fine detail. Press `r` to cycl
 shaded ASCII, and pure Braille. A compact seek bar sits under
 the image; playback time, state, and controls appear in the window title. Space pauses, Left/Right seek by 10 seconds,
 Home/End jump to the beginning or near the end, `v` toggles a subtle soft-focus blend, and q returns.
+When video starts from the TUI, the video list remains visible beside the picture (or below it
+in a narrow terminal). Up/Down scroll through videos while playback continues; Enter starts the
+highlighted video. Returning with `q` keeps the browsed selection.
+Press `f` or Tab while watching to flip between the video list and a full-picture view;
+the current video and browse position stay put. A brief on-screen cue marks each switch.
 On macOS and Linux, mpv plays the video soundtrack during the terminal view and follows pause/seek/quit
 controls. Without mpv, or on Windows, grayscale video still plays silently. Seeking and duration depend
 on the video stream. Window video opens in mpv when available or the system browser. This is a native

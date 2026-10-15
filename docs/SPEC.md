@@ -135,6 +135,11 @@ the Python package does not run privileged or package-manager commands during `p
   Show actionable key hints.
 - TUI refreshes remain bounded, selection survives refresh when the item still exists,
   and network/player errors appear in the interface without a traceback.
+- During terminal video playback launched from the TUI, keep the current section's videos
+  visible beside the picture, or below it in a narrow terminal. Up/Down browse the video
+  list without stopping playback; Enter switches to the highlighted video. Returning to
+  the TUI keeps the browsed selection. `f` or Tab toggles between this browse view and
+  a full-picture view without restarting playback; show a brief on-screen mode cue.
 - TUI rendering is testable with a fake terminal; no full-screen UI in unit tests.
 
 ## Release acceptance

@@ -62,6 +62,7 @@ class PlaybackTests(unittest.TestCase):
 
     def test_video_key_sequences_decode_arrows_and_do_not_decode_escape_as_quit(self):
         cases = {
+            "\x1b[A": "up", "\x1b[B": "down", "\xe0H": "up", "\xe0P": "down",
             "\x1b[D": "left", "\x1b[C": "right", "\x1b[1;5D": "left",
             "\x1b[H": "home", "\x1bOF": "end", "\x1b[1~": "home",
             "\x1b[4~": "end", "\xe0K": "left",
@@ -71,6 +72,82 @@ class PlaybackTests(unittest.TestCase):
         for sequence, expected in cases.items():
             with self.subTest(sequence=sequence):
                 self.assertEqual(player._decode_key_sequence(sequence), expected)
+
+    def test_video_browser_renders_safe_scrolling_list(self):
+        items = [{"title": f"Video {n}"} for n in range(12)]
+        items[8]["title"] = "Unsafe\x1b[2J\x07 title"
+        view = player._video_browser_view("frame", "[timeline]", items, 8, 26, 50, 0, 6)
+        self.assertIn("VIDEOS ↑↓ Enter  9/12", view)
+        self.assertIn("▶ Unsafe title", view)
+        self.assertNotIn("\x1b[2J", view)
+        self.assertIn("[timeline]", view)
+
+    def test_video_browser_selects_another_video_while_playing(self):
+        frame = types.SimpleNamespace(shape=(2, 3, 3))
+        class Capture:
+            released = False
+            def isOpened(self): return True
+            def get(self, prop): return 20
+            def read(self): return True, frame
+            def release(self): self.released = True
+        capture = Capture()
+        fake_cv2 = types.SimpleNamespace(
+            VideoCapture=lambda url: capture, CAP_PROP_FPS=0, INTER_AREA=1, COLOR_BGR2GRAY=2,
+            resize=lambda img, size, interpolation: img,
+            cvtColor=lambda img, code: types.SimpleNamespace(tolist=lambda: [[0] * 6 for _ in range(2)]))
+        keys = iter(([], ["down"], ["\r"]))
+        @contextmanager
+        def key_reader():
+            yield lambda: next(keys, [])
+        soundtrack = unittest.mock.Mock()
+        soundtrack.start.return_value = True
+        with patch.dict(sys.modules, {"cv2": fake_cv2}), \
+             patch("ahoy_streamer_cli.player.MpvAudioTrack", return_value=soundtrack), \
+             patch("ahoy_streamer_cli.player._terminal_keys", return_value=key_reader()), \
+             patch("ahoy_streamer_cli.player.time.sleep"), contextlib.redirect_stdout(io.StringIO()):
+            result = player._play_ascii_video("https://media.test/1.mp4",
+                                              browse_items=[{"title": "One"}, {"title": "Two"}])
+        self.assertEqual(result, ("select", 1))
+        self.assertTrue(capture.released)
+        soundtrack.stop.assert_called_once()
+
+    def test_full_screen_toggle_keeps_paused_frame_and_browse_selection(self):
+        frame = types.SimpleNamespace(shape=(2, 3, 3))
+        class Capture:
+            reads = 0
+            def isOpened(self): return True
+            def get(self, prop): return 20
+            def read(self):
+                self.reads += 1
+                return True, frame
+            def release(self): pass
+        capture = Capture()
+        fake_cv2 = types.SimpleNamespace(
+            VideoCapture=lambda url: capture, CAP_PROP_FPS=0, INTER_AREA=1, COLOR_BGR2GRAY=2,
+            resize=lambda img, size, interpolation: img,
+            cvtColor=lambda img, code: types.SimpleNamespace(tolist=lambda: [[0] * 6 for _ in range(2)]))
+        keys = iter(([], [" "], [], ["f"], [], ["\t"], ["q"]))
+        @contextmanager
+        def key_reader():
+            yield lambda: next(keys, ["q"])
+        soundtrack = unittest.mock.Mock()
+        soundtrack.start.return_value = True
+        soundtrack.toggle_pause.return_value = True
+        output = io.StringIO()
+        with patch.dict(sys.modules, {"cv2": fake_cv2}), \
+             patch("ahoy_streamer_cli.player.MpvAudioTrack", return_value=soundtrack), \
+             patch("ahoy_streamer_cli.player._terminal_keys", return_value=key_reader()), \
+             patch("ahoy_streamer_cli.player.time.sleep"), \
+             patch("shutil.get_terminal_size", return_value=types.SimpleNamespace(columns=80, lines=24)), \
+             contextlib.redirect_stdout(output):
+            result = player._play_ascii_video("https://media.test/1.mp4",
+                                              browse_items=[{"title": "One"}, {"title": "Two"}],
+                                              browse_index=1)
+        self.assertEqual(result, ("back", 1))
+        self.assertEqual(capture.reads, 1)
+        self.assertIn("FULL SCREEN", output.getvalue())
+        self.assertIn("BROWSE", output.getvalue())
+        soundtrack.toggle_pause.assert_called_once()
 
     @unittest.skipIf(sys.platform == "win32", "uses a POSIX pseudo-terminal")
     def test_terminal_reader_consumes_complete_csi_arrow_sequences(self):
