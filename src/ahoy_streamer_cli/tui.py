@@ -8,6 +8,9 @@ from . import catalog, player
 NAV = (("Home", "home"), ("Music", "music"), ("Videos", "video"), ("Podcasts", "podcasts"),
        ("Artists", "artists"), ("Events", "events"), ("Studio", "studio"), ("Radio", "radio"),
        ("AHOY TV", "tv"), ("Search", "search"))
+HOME_SECTIONS = ("music", "video", "podcasts", "artists", "events", "studio")
+SEARCH_SECTIONS = HOME_SECTIONS
+SECTION_CACHE_SECONDS = 30
 ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
@@ -81,8 +84,38 @@ def run(stdscr):
     typeahead_at = 0.0
     message = "Loading discovery…"
     section = NAV[section_idx][1]
+    section_cache = {}
 
-    def load():
+    def cached_section(name, refresh=False):
+        # Radio's current item and elapsed position change continuously.
+        if name == "radio":
+            return catalog.section_items(name)
+        entry = section_cache.get(name)
+        if not refresh and entry and time.monotonic() - entry[0] < SECTION_CACHE_SECONDS:
+            return entry[1]
+        section_cache.pop(name, None)
+        items = catalog.section_items(name)
+        section_cache[name] = (time.monotonic(), items)
+        return items
+
+    def cached_sections(names, refresh=False):
+        names = tuple(names)
+        now = time.monotonic()
+        pending = []
+        for name in names:
+            entry = section_cache.get(name)
+            if refresh or not entry or now - entry[0] >= SECTION_CACHE_SECONDS:
+                section_cache.pop(name, None)
+                pending.append(name)
+        fetched = catalog.section_items_many(pending, tolerate_errors=True)
+        now = time.monotonic()
+        for name, section in fetched.items():
+            section_cache[name] = (now, section)
+        found = {name: section_cache[name][1] for name in names if name in section_cache}
+        failed = [name for name in names if name not in found]
+        return found, failed
+
+    def load(refresh=False):
         nonlocal items, selected, message
         section = NAV[section_idx][1]
         try:
@@ -90,20 +123,23 @@ def run(stdscr):
                 items = []
                 message = "Press / to search the public catalogs"
             elif section == "radio":
-                items = catalog.section_items("radio")
+                items = cached_section(section, refresh)
                 if items:
                     items, elapsed = _radio_now(items)
                     message = f"Live station · current item started {elapsed}s ago; station order/epoch from API"
                 else:
                     message = "Radio catalog is empty"
             elif section == "tv":
-                items = catalog.section_items("tv")
+                items = cached_section(section, refresh)
                 message = "Channel libraries only · no authoritative schedule returned by public API"
             elif section == "home":
-                items = catalog.section_items("home")
+                sections, failures = cached_sections(HOME_SECTIONS, refresh)
+                items = [item for name in HOME_SECTIONS for item in sections.get(name, [])][:80]
                 message = "Explore public catalogs · choose a section at left"
+                if failures:
+                    message += f" · unavailable: {', '.join(failures)}"
             else:
-                items = catalog.section_items(section)
+                items = cached_section(section, refresh)
                 message = f"{len(items)} items"
             selected = min(selected, max(0, len(items) - 1))
         except Exception as e:
@@ -124,13 +160,8 @@ def run(stdscr):
         if not query:
             return
         section_idx = next(i for i, (_, key) in enumerate(NAV) if key == "search")
-        found = []
-        failures = []
-        for name in ("music", "video", "podcasts", "artists", "events", "studio"):
-            try:
-                found.extend(catalog.section_items(name))
-            except Exception as e:
-                failures.append(name)
+        sections, failures = cached_sections(SEARCH_SECTIONS)
+        found = [item for name in SEARCH_SECTIONS for item in sections.get(name, [])]
         needle = query.casefold()
         items = [item for item in found if needle in item["title"].casefold()
                  or needle in (item.get("creator") or "").casefold()]
@@ -180,8 +211,11 @@ def run(stdscr):
 
     def load_startup():
         try:
-            startup_result["items"] = catalog.section_items("home")
+            sections, failures = cached_sections(HOME_SECTIONS)
+            startup_result["items"] = [item for name in HOME_SECTIONS for item in sections.get(name, [])][:80]
             startup_result["message"] = "Explore public catalogs · choose a section at left"
+            if failures:
+                startup_result["message"] += f" · unavailable: {', '.join(failures)}"
         except Exception as e:
             startup_result["items"] = []
             startup_result["message"] = f"Could not load Home: {e}"
@@ -309,7 +343,7 @@ def run(stdscr):
                 query, detail, selected = "", False, 0
                 load()
             elif key in (ord("r"), curses.KEY_F5):
-                load()
+                load(refresh=True)
             elif key == ord("/"):
                 search_now(stdscr, h, w)
                 detail = False

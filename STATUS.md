@@ -1,7 +1,10 @@
 # Current handoff
 
 - Stage: app-like public-catalog TUI with portable playback draft; package not published.
-- Branch: `codex/moonlit-startup` (installer polish developed on `codex/linux-installer`).
+- Branch: `codex/catalog-speedups` (installer polish developed on `codex/linux-installer`).
+- Catalog speed: Home and all-section search now fetch independent endpoints concurrently,
+  with bounded workers and stable section order. The TUI caches successful catalog sections
+  in memory for 30 seconds; `r`/F5 refreshes, and radio stays uncached.
 - Startup: added a moonlit ASCII ship scene with gently shifting waves while the actual
   initial Home catalog request runs in a background thread; no artificial delay.
 - Playback: miniaudio streams MP3/WAV/FLAC/Vorbis audio, using URL extensions, response types, or sniffing for signed URLs. Unsupported audio formats open in the system browser. Linux aarch64 uses browser audio. Space starts the selected item when idle, toggles the current item, or stops owned playback and switches to a different selection. Terminal video defaults to two-tone grayscale quadrant blocks: four spatial samples (2×2) per character cell; `r` cycles through grayscale/Braille hybrid, shaded ASCII, and Braille-only. `v` toggles a subtle 3x3 soft-focus blend. A compact seek timeline sits below the picture; playback details and controls appear in the terminal window title. Space pauses, Left/Right seek by 10 seconds, Home/End jumps, and q returns. CSI/SS3 and Windows extended-key sequences are normalized; bare Escape does not leave playback. System mpv plays embedded audio with synchronized controls on macOS/Linux; without mpv, or on Windows, grayscale video continues silently. mpv is installed separately through each OS's package channel; `pip install` does not run package managers or privileged installers. Seeking/duration depend on stream support. Windowed playback is controlled externally.
@@ -12,8 +15,8 @@
 - Parity gaps: simultaneous terminal video and soundtrack needs optional mpv on macOS/Linux; Windows currently renders video without audio. No auto radio track rollover, synchronized AHOY TV schedule, richer detail routes, accounts, cross-device sync, payments, downloads, admin, saved playlists, or playback after app exit.
 - Installer: the one-command Linux install preflights platform/network/venv support, asks before system package setup, installs into a managed `.venv`, creates app/uninstall launchers, and runs `doctor`. Re-runs update clean installs only. `mpv` remains optional.
 - Changed files from startup scene: `src/ahoy_streamer_cli/tui.py`, `STATUS.md`.
-- Checks: `git diff --check` — pass; full tests and visual terminal check not run. Branch created after read-only `.git` rejected the first attempt. Commit `e688eb9` pushed with `git push -u origin codex/moonlit-startup` — pass.
+- Checks: prior startup branch commit `5f8bb84` is pushed. Catalog speed changes: `git diff --check` — pass; full tests and visual terminal check not run.
 - Release blockers: T05 clean-install/package checks, platform install verification, and rights confirmation for any third-party/brand/media content remain; package is not published.
-- Current changed files: `LICENSE`, `README.md`, `pyproject.toml`, `docs/RELEASE.md`, `STATUS.md`.
-- Licensing update: MIT added for project source and declared in package metadata; README/release notes clarify third-party and brand/media boundaries. `git diff --check` — pass; tests not run.
-- Remaining: manually view the startup scene; finish T05 and confirm distribution rights before tagging a public release. Next task: T05 clean-install/package checks.
+- Licensing update: MIT added for project source and declared in package metadata; README/release notes clarify third-party and brand/media boundaries.
+- Current changed files: `src/ahoy_streamer_cli/catalog.py`, `src/ahoy_streamer_cli/tui.py`, `STATUS.md`.
+- Remaining: manually view the startup scene and run the offline catalog/TUI tests when requested; finish T05 and confirm distribution rights before tagging a public release. Next task: T05 clean-install/package checks.

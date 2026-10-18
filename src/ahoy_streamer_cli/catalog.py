@@ -1,11 +1,13 @@
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 import urllib.error
 import urllib.request
 
 from .config import base_url, timeout
 
 MAX_BODY = 5 * 1024 * 1024
+MAX_SECTION_WORKERS = 6
 CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 SECTIONS = {
     "music": ("/api/music", "tracks"), "video": ("/api/shows", "shows"),
@@ -89,13 +91,9 @@ def catalog(kind, origin=None, seconds=10):
 def section_items(section, origin=None, seconds=10):
     origin, seconds = base_url(origin), timeout(seconds)
     if section == "home":
-        combined = []
-        for name in ("music", "video", "podcasts", "artists", "events", "studio"):
-            try:
-                combined.extend(section_items(name, origin, seconds))
-            except (ValueError, RuntimeError, OSError):
-                continue
-        return combined[:80]
+        sections = ("music", "video", "podcasts", "artists", "events", "studio")
+        loaded = section_items_many(sections, origin, seconds, tolerate_errors=True)
+        return [item for name in sections for item in loaded.get(name, [])][:80]
     if section not in SECTIONS:
         raise ValueError(f"unsupported section: {section}")
     path, key = SECTIONS[section]
@@ -157,13 +155,33 @@ def section_items(section, origin=None, seconds=10):
     return result
 
 
+def section_items_many(sections, origin=None, seconds=10, tolerate_errors=False):
+    """Fetch independent sections concurrently, preserving the requested order."""
+    sections = tuple(sections)
+    if not sections:
+        return {}
+    origin, seconds = base_url(origin), timeout(seconds)
+    workers = min(MAX_SECTION_WORKERS, len(sections))
+    loaded = {}
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="ahoy-catalog") as pool:
+        futures = {name: pool.submit(section_items, name, origin, seconds) for name in sections}
+        for name, future in futures.items():
+            try:
+                loaded[name] = future.result()
+            except Exception:
+                if not tolerate_errors:
+                    raise
+    return loaded
+
+
 def all_catalog(origin=None, seconds=10):
     return section_items("music", origin, seconds) + section_items("video", origin, seconds)
 
 
 def search(query, kind="all", limit=20, origin=None, seconds=10):
     sections = ("music", "video", "podcasts", "artists", "events", "studio") if kind == "all" else (kind,)
-    items = [item for section in sections for item in section_items(section, origin, seconds)]
+    loaded = section_items_many(sections, origin, seconds)
+    items = [item for section in sections for item in loaded[section]]
     needle = query.casefold()
     items = [x for x in items if needle in x["title"].casefold() or needle in (x["creator"] or "").casefold()]
     items.sort(key=lambda x: (x["type"], x["title"].casefold(), x["id"]))
