@@ -1,5 +1,6 @@
 import curses
 import re
+import threading
 import time
 
 from . import catalog, player
@@ -18,6 +19,57 @@ def _line(stdscr, y, x, text, width, attr=0):
             stdscr.addnstr(y, x, safe, width, attr)
         except curses.error:
             pass
+
+
+def _draw_startup(stdscr, frame):
+    """Draw a small moonlit sailing scene while the first catalog loads."""
+    stdscr.erase()
+    height, width = stdscr.getmaxyx()
+    try:
+        if curses.has_colors():
+            curses.start_color()
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_CYAN, -1)
+            curses.init_pair(2, curses.COLOR_WHITE, -1)
+            moon_attr = curses.color_pair(2) | curses.A_BOLD
+            sea_attr = curses.color_pair(1)
+        else:
+            moon_attr, sea_attr = curses.A_BOLD, curses.A_DIM
+    except curses.error:
+        moon_attr, sea_attr = curses.A_BOLD, curses.A_DIM
+
+    sky = [
+        "       .        *          .        *",
+        "                  _..._",
+        "               .-'     '-.",
+        "              /   .---.   \\",
+        "              |  /  )  \\  |",
+        "              \\  '---'  /",
+        "               '-._____.-'",
+    ]
+    ship = [
+        "                    /\\",
+        "                   /  \\       /|",
+        "                  /    \\     / |",
+        "             ____/______\\___/  |",
+        "              \\______________/",
+    ]
+    scene = sky + [""] + ship
+    top = max(1, (height - len(scene) - 5) // 2)
+    for row, line in enumerate(scene):
+        x = max(0, (width - len(line)) // 2)
+        attr = moon_attr if 1 <= row <= 6 else curses.A_DIM
+        _line(stdscr, top + row, x, line, max(0, width - x), attr)
+
+    wave = "~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~"
+    wave2 = "  ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~ ~~~ ~~~~"
+    for offset, text in enumerate((wave, wave2)):
+        shift = (frame // 5 + offset * 3) % 7
+        moving = text[shift:] + text[:shift]
+        y = min(height - 5 + offset, height - 1)
+        _line(stdscr, y, 0, moving.center(width), width, sea_attr)
+    _line(stdscr, height - 2, 0, "AHOY  ·  Tuning in…".center(width), width, curses.A_BOLD)
+    stdscr.refresh()
 
 
 def run(stdscr):
@@ -121,8 +173,36 @@ def run(stdscr):
         except Exception as e:
             message = str(e)
 
-    load()
+    # Fetch the first view off the curses thread so the welcome scene can animate
+    # during the actual network wait without delaying startup with a fake pause.
+    startup_result = {}
+    startup_done = threading.Event()
+
+    def load_startup():
+        try:
+            startup_result["items"] = catalog.section_items("home")
+            startup_result["message"] = "Explore public catalogs · choose a section at left"
+        except Exception as e:
+            startup_result["items"] = []
+            startup_result["message"] = f"Could not load Home: {e}"
+        finally:
+            startup_done.set()
+
+    threading.Thread(target=load_startup, name="ahoy-startup-catalog", daemon=True).start()
+    frame = 0
     try:
+        stdscr.timeout(100)
+        while True:
+            if not startup_done.is_set():
+                _draw_startup(stdscr, frame)
+                frame += 1
+                stdscr.getch()
+                continue
+            items = startup_result.get("items", [])
+            message = startup_result.get("message", "")
+            selected = min(selected, max(0, len(items) - 1))
+            stdscr.timeout(-1)
+            break
         while True:
             session.refresh_state()
             stdscr.erase()
