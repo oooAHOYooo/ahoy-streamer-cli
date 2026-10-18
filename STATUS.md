@@ -12,6 +12,6 @@
 - Parity gaps: simultaneous terminal video and soundtrack needs optional mpv on macOS/Linux; Windows currently renders video without audio. No auto radio track rollover, synchronized AHOY TV schedule, richer detail routes, accounts, cross-device sync, payments, downloads, admin, saved playlists, or playback after app exit.
 - Installer: the one-command Linux install preflights platform/network/venv support, asks before system package setup, installs into a managed `.venv`, creates app/uninstall launchers, and runs `doctor`. Re-runs update clean installs only. `mpv` remains optional.
 - Changed files for this task: `src/ahoy_streamer_cli/tui.py`, `STATUS.md`.
-- Checks: not run (no test or verification request); source reviewed manually. `git switch -c codex/moonlit-startup` first failed because `.git` was read-only; rerun with reviewed permission succeeded.
-- Remaining: manually view the startup scene in a terminal; run Linux installer/uninstaller checks and complete T05 clean-install/package checks. Full tests remain unrun.
-- Next: T05 clean-install/package checks.
+- Checks: `git diff --check` — pass; full tests and visual terminal check not run. Branch created after read-only `.git` rejected the first attempt. Commit `e688eb9` pushed with `git push -u origin codex/moonlit-startup` — pass.
+- Release blockers: T05 clean-install/package checks and platform install verification remain; project license is unselected, so do not tag/publish a public release yet.
+- Remaining: manually view the startup scene; finish T05, select a license, and recheck public release notes. Next task: T05 clean-install/package checks.
