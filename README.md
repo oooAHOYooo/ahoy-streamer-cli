@@ -151,6 +151,8 @@ See `docs/HANDOFF.md` for a ready-to-use implementation prompt.
 
 GitHub: https://github.com/oooAHOYooo/ahoy-streamer-cli
 
-The repository is public for early testing; the Python package is not published. No project license
-has been selected yet, so choose one before accepting contributions or redistributing the code.
-See `docs/RELEASE.md`.
+The repository is public for early testing; the Python package is not published. The project
+source code is licensed under the MIT License; see [LICENSE](LICENSE). That license does not
+grant rights to AHOY names, logos, media, or other third-party materials. Dependencies retain
+their own licenses and notices; see [dependency and license notes](docs/DEPENDENCIES.md).
+See [release checklist](docs/RELEASE.md) for remaining launch work.

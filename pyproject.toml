@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "ahoy-streamer-terminal"
 version = "0.1.0"
 description = "A keyboard-first terminal for AHOY Streamer"
+license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
   "miniaudio>=1.71,<2; platform_system == 'Darwin' and (platform_machine == 'arm64' or platform_machine == 'x86_64') or platform_system == 'Windows' and platform_machine == 'AMD64' or platform_system == 'Linux' and platform_machine == 'x86_64'",
