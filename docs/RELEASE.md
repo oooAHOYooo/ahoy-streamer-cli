@@ -10,6 +10,14 @@ license. Check package-name ownership before any PyPI release.
 
 ## Public launch after T05
 
+The manual `.github/workflows/standalone-build.yml` workflow builds one-file
+executables for Windows x64, macOS Intel/Apple Silicon, and Linux x64 with PyInstaller.
+The first four ZIPs were published as an unsigned
+[standalone preview](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1)
+after CI verified the offline tests and executable version/help/doctor checks. Each ZIP
+includes available third-party license files. Verify live audio/video on clean machines
+before calling the release stable. A project license remains undecided.
+
 - Choose license and confirm branding/media usage rights for any recorded demo.
 - Verify macOS/Linux install and mpv instructions with exact tested versions.
 - Check redirects/playable media handling and subprocess cleanup.

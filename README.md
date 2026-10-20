@@ -29,7 +29,51 @@ payment, administration, or synchronized-device features.
 A small command interface remains alongside the TUI so agents can search, inspect,
 and request playback without navigating screens. JSON is a stable public contract.
 
-## Quick install on Linux or Omarchy
+## Quick install
+
+For the fewest prerequisites, download the [standalone preview release](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1):
+
+| System | Download |
+| --- | --- |
+| macOS Apple Silicon | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-macos-apple-silicon-preview.zip) |
+| macOS Intel | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-macos-intel-preview.zip) |
+| Linux x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-linux-x64-preview.zip) |
+| Windows x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-windows-x64-preview.zip) |
+
+Extract the ZIP and read `START_HERE.txt`. Run `./ahoy-streamer` from a terminal on
+macOS/Linux, or `./ahoy-streamer.exe` in Windows PowerShell. Python and the app's Python
+packages are included. The builds passed offline tests and startup/backend checks on
+their build machines; real playback has not been verified on every system. macOS builds
+are unsigned and may require approval in Privacy & Security to open. Linux was built
+on Ubuntu 22.04; older distributions are unverified. Video soundtracks on macOS/Linux
+still use separately installed `mpv`; Windows terminal video is silent.
+
+The source-install options below remain available if you prefer to update from `main`.
+
+### Windows 10/11 (PowerShell)
+
+Install Python 3.11 or newer from [python.org](https://www.python.org/downloads/windows/)
+if `py -3 --version` does not work. Then paste this into PowerShell:
+
+```powershell
+$app = Join-Path $env:LOCALAPPDATA 'AHOY Streamer'
+py -3 -m venv $app
+if ($LASTEXITCODE -ne 0) { throw 'Python 3.11+ with venv is required.' }
+& (Join-Path $app 'Scripts\python.exe') -m pip install --disable-pip-version-check --upgrade 'https://github.com/oooAHOYooo/ahoy-streamer-cli/archive/refs/heads/main.zip'
+if ($LASTEXITCODE -ne 0) { throw 'Install failed; check the error above.' }
+& (Join-Path $app 'Scripts\ahoy-streamer.exe')
+```
+
+This installs into your user profile without Git, administrator access, `PATH` edits, or
+PowerShell activation. Paste the same block again to update. Later, start it with
+`& (Join-Path $env:LOCALAPPDATA 'AHOY Streamer\Scripts\ahoy-streamer.exe')` and check
+readiness with the same path followed by `doctor`. To remove this install, close the app
+and run `Remove-Item -LiteralPath (Join-Path $env:LOCALAPPDATA 'AHOY Streamer') -Recurse -Force`.
+The installer downloads Python dependencies from PyPI; an internet connection is required.
+Windows terminal video currently has no synchronized soundtrack, even if `mpv` is installed.
+Standalone supported audio can play through the Python dependency.
+
+### macOS or Linux
 
 Run this in a terminal:
 
@@ -39,12 +83,26 @@ curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/ahoy-streamer-cli/main/i
 ```
 
 The installer fetches the latest `main`, creates an isolated Python environment with the
-OpenCV video decoder, and adds `ahoy-streamer` to `~/.local/bin`. If Git, Python, or Python's
-venv tools are missing, it asks before installing those prerequisites through Omarchy or the
-detected Linux package manager. It checks internet access first, reports video/audio readiness,
+OpenCV video decoder on supported systems, and adds `ahoy-streamer` to `~/.local/bin`.
+It checks internet access, reports video/audio readiness,
 and prints the exact launch and uninstall commands. Rerun the installer to update; it stops
 without changing a managed install that has local edits. Once `~/.local/bin` is on `PATH`, you
 can use the shorter `ahoy-streamer` command.
+
+**Before installing:** You need an internet connection, Git, and Python 3.11 or newer with
+`venv` and `pip`. Check with `git --version` and `python3 --version`. On Linux, the installer
+offers to install missing Git/Python/venv packages through Omarchy or a supported distribution
+package manager. On macOS, install missing tools first: run `xcode-select --install` for Git,
+and install Python 3.11+ from [python.org](https://www.python.org/downloads/macos/) or with
+Homebrew (`brew install python@3.13`). If `python3` still points to an older Python, use
+`curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/ahoy-streamer-cli/main/install.sh | PYTHON=python3.13 bash`.
+macOS 13+ supports terminal video; older versions open video in the browser.
+
+**If video has no sound:** Install optional `mpv` (`brew install mpv` on macOS; on Linux use
+your distribution's package manager, for example `sudo apt install mpv` or
+`sudo pacman -S mpv`). Then run `~/.local/bin/ahoy-streamer doctor` to check readiness.
+Terminal video works silently without `mpv`; regular supported audio uses the Python
+dependency installed by the script. On Linux aarch64, regular audio opens in the browser.
 
 To remove a one-command install later, run `~/.local/bin/ahoy-streamer-uninstall`. It confirms
 before deleting the app and its virtual environment; operating-system packages are left alone.
@@ -55,7 +113,7 @@ To install from a checkout instead:
 ```sh
 git clone --branch main --single-branch https://github.com/oooAHOYooo/ahoy-streamer-cli.git
 cd ahoy-streamer-cli
-./install.sh                         # Linux: installs into .venv, including OpenCV video support
+./install.sh                         # macOS/Linux: installs into .venv
 .venv/bin/ahoy-streamer              # open the terminal listening room
 .venv/bin/ahoy-streamer search poets --json
 .venv/bin/ahoy-streamer show music:song_1 --json
@@ -64,7 +122,7 @@ cd ahoy-streamer-cli
 .venv/bin/ahoy-streamer doctor --json
 ```
 
-On macOS, install into a Python virtual environment:
+To install manually on macOS into a Python virtual environment:
 
 ```sh
 python3 -m venv .venv
@@ -73,7 +131,7 @@ python -m pip install -e .
 ahoy-streamer
 ```
 
-On Windows PowerShell:
+From an existing checkout on Windows PowerShell:
 
 ```powershell
 py -3 -m venv .venv

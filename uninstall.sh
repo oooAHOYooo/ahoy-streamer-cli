@@ -12,7 +12,8 @@ fail() {
     exit 1
 }
 
-script_path="$(readlink -f -- "${BASH_SOURCE[0]}")"
+script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
+[ -L "$script_path" ] && script_path="$(readlink "$script_path")"
 [ "$script_path" = "$install_root/uninstall.sh" ] || \
     fail "This command does not point to the managed installation at $install_root."
 [ -d "$install_root/.git" ] || fail "Managed app checkout not found at $install_root."
@@ -25,13 +26,13 @@ changes="$(git -C "$install_root" status --porcelain --untracked-files=all)"
 [ -z "$changes" ] || fail "The installation has local files or changes. Review them before removing $install_root."
 
 if [ -L "$launcher" ]; then
-    [ "$(readlink -f -- "$launcher")" = "$install_root/.venv/bin/ahoy-streamer" ] || \
+    [ "$(readlink "$launcher")" = "$install_root/.venv/bin/ahoy-streamer" ] || \
         fail "The ahoy-streamer launcher points somewhere else; refusing to remove it."
 elif [ -e "$launcher" ]; then
     fail "The ahoy-streamer launcher is not a symlink; refusing to remove it."
 fi
 if [ -L "$uninstaller" ]; then
-    [ "$(readlink -f -- "$uninstaller")" = "$script_path" ] || \
+    [ "$(readlink "$uninstaller")" = "$script_path" ] || \
         fail "The uninstaller launcher points somewhere else; refusing to remove it."
 elif [ -e "$uninstaller" ]; then
     fail "The uninstaller launcher is not a symlink; refusing to remove it."
