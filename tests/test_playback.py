@@ -1,5 +1,6 @@
 import io
 import contextlib
+import os
 import types
 import sys
 import unittest
@@ -253,6 +254,7 @@ class PlaybackTests(unittest.TestCase):
         self.assertEqual(capture.positions, [(0, 0.0), (0, 10000.0), (0, 0), (0, 19000.0)])
         self.assertEqual(soundtrack.seek.call_count, 4)
 
+    @unittest.skipIf(os.name == "nt", "terminal video soundtracks are unavailable on Windows")
     def test_mpv_audio_track_starts_pauses_seeks_and_stops(self):
         class Process:
             def __init__(self): self.signals, self.terminated = [], False

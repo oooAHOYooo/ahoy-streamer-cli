@@ -35,7 +35,7 @@ jobs:
       - name: Run offline tests
         run: python -m unittest discover -s tests -q
       - name: Build executable
-        run: python -m PyInstaller --clean --noconfirm --onefile --console --name ahoy-streamer --hidden-import=miniaudio --hidden-import=cv2 packaging/entry.py
+        run: python -m PyInstaller --clean --noconfirm --onefile --console --name ahoy-streamer --hidden-import=miniaudio --hidden-import=_miniaudio --hidden-import=cv2 packaging/entry.py
       - name: Check non-playback commands
         shell: bash
         run: |
