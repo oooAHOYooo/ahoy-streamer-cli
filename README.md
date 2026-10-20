@@ -31,13 +31,24 @@ and request playback without navigating screens. JSON is a stable public contrac
 
 ## Quick install
 
-The commands below install the current source version. A no-Python download is being
-prepared; it is not released yet. The manual standalone build workflow packages Python
-and the app dependencies into separate executables for Windows x64, macOS Intel/Apple
-Silicon, and Linux x64. It checks only non-playback commands and saves test artifacts;
-it does not publish a release. Those artifacts still need playback checks on real machines,
-license review, and signing/notarization where appropriate before being offered as the
-recommended download.
+For the fewest prerequisites, download the [standalone preview release](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1):
+
+| System | Download |
+| --- | --- |
+| macOS Apple Silicon | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-macos-apple-silicon-preview.zip) |
+| macOS Intel | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-macos-intel-preview.zip) |
+| Linux x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-linux-x64-preview.zip) |
+| Windows x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-windows-x64-preview.zip) |
+
+Extract the ZIP and read `START_HERE.txt`. Run `./ahoy-streamer` from a terminal on
+macOS/Linux, or `./ahoy-streamer.exe` in Windows PowerShell. Python and the app's Python
+packages are included. The builds passed offline tests and startup/backend checks on
+their build machines; real playback has not been verified on every system. macOS builds
+are unsigned and may require approval in Privacy & Security to open. Linux was built
+on Ubuntu 22.04; older distributions are unverified. Video soundtracks on macOS/Linux
+still use separately installed `mpv`; Windows terminal video is silent.
+
+The source-install options below remain available if you prefer to update from `main`.
 
 ### Windows 10/11 (PowerShell)
 
