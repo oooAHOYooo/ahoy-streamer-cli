@@ -44,8 +44,10 @@ jobs:
           "${{ matrix.executable }}" --help
           "${{ matrix.executable }}" doctor --json > doctor.json
           python -c 'import json; d=json.load(open("doctor.json"))["data"]; assert d["audio_ready"] and d["video_backend"], d'
+      - name: Bundle executable and dependency notices
+        run: python packaging/make_release_bundle.py --executable "${{ matrix.executable }}" --output "dist/ahoy-streamer-${{ matrix.name }}-preview.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: ahoy-streamer-${{ matrix.name }}
-          path: ${{ matrix.executable }}
+          path: dist/ahoy-streamer-${{ matrix.name }}-preview.zip
           if-no-files-found: error
