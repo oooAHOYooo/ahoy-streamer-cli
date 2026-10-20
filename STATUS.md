@@ -1,7 +1,7 @@
 # Current handoff
 
 - Stage: app-like public-catalog TUI; standalone preview published at https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1 . The Python package is not published to PyPI.
-- Branch: `codex/mac-linux-install-guide`; release tag points at commit `d15d010` on this branch. `main` has not received the installer/docs/build changes yet.
+- Implementation branch: `codex/mac-linux-install-guide`, reviewed in PR #1. The preview release tag points at commit `d15d010` from this branch.
 - Standalone preview: Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs each include a PyInstaller one-file executable, START_HERE, dependency notes, and available third-party license files. The build workflow is `.github/workflows/standalone-build.yml`; `packaging/entry.py` and `packaging/make_release_bundle.py` support it. Mac executables are unsigned. Linux was built on Ubuntu 22.04; older distributions are unverified.
 - Install fallback: `install.sh` accepts Linux x86_64/aarch64 and macOS Intel/Apple Silicon, creates a virtualenv and launcher, and runs doctor. Linux can offer Git/Python/venv bootstrap; macOS needs those tools first. Windows README has a Git-free PowerShell source-install block. `mpv` is optional for macOS/Linux terminal video soundtracks; Windows terminal video is silent.
 - Playback: miniaudio handles supported standalone audio on macOS, Windows x64, and Linux x86_64; Linux aarch64 uses browser audio. OpenCV handles terminal video on supported hosts. Live playback has not been verified across the released systems.
@@ -9,4 +9,4 @@
 - Local checks: `python3 -m unittest discover -s tests -q` — 33 tests, 1 skipped; `bash -n install.sh uninstall.sh` and `git diff --check` — pass. The macOS/Linux installer and Windows PowerShell source install were not executed end to end.
 - Release: `gh release create v0.1.0-standalone-preview.1 ... --prerelease` succeeded; `gh release view` confirmed four public assets. SHA-256 values are in the release notes.
 - Task files: `.github/workflows/standalone-build.yml`, `packaging/entry.py`, `packaging/make_release_bundle.py`, `tests/test_playback.py`, `install.sh`, `uninstall.sh`, `README.md`, `docs/DEPENDENCIES.md`, `docs/RELEASE.md`, `STATUS.md`. Preserve unrelated untracked `ahoy-streamer-cli/` directory.
-- Remaining: check live audio/video on clean macOS/Linux/Windows devices, check macOS 13 and older Linux support, choose a project license, and complete T05 clean-install/package checks. Do not claim these checks passed. Next task: land branch on `main` and complete real-device validation.
+- Remaining: check live audio/video on clean macOS/Linux/Windows devices, check macOS 13 and older Linux support, choose a project license, and complete T05 clean-install/package checks. Do not claim these checks passed. Next task: complete real-device validation.
