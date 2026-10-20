@@ -39,6 +39,7 @@ jobs:
       - name: Check non-playback commands
         shell: bash
         run: |
+          AHOY_STANDALONE_IMPORT_DIAGNOSTICS=1 "${{ matrix.executable }}"
           "${{ matrix.executable }}" --version
           "${{ matrix.executable }}" --help
           "${{ matrix.executable }}" doctor --json > doctor.json
