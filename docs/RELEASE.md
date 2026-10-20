@@ -10,6 +10,13 @@ license. Check package-name ownership before any PyPI release.
 
 ## Public launch after T05
 
+The manual `.github/workflows/standalone-build.yml` workflow builds one-file test
+executables for Windows x64, macOS Intel/Apple Silicon, and Linux x64 with PyInstaller.
+It uploads workflow artifacts only; it does not create a GitHub release or package.
+Verify each artifact on a clean machine, especially audio/video backends, before
+linking it as an end-user download. Select a license and review third-party notices,
+then sign/notarize artifacts as appropriate for distribution.
+
 - Choose license and confirm branding/media usage rights for any recorded demo.
 - Verify macOS/Linux install and mpv instructions with exact tested versions.
 - Check redirects/playable media handling and subprocess cleanup.

@@ -3,12 +3,12 @@
 The playback extras are ordinary PyPI dependencies; this project does not embed their
 native libraries or FFmpeg binaries in its own wheel.
 
-On Linux, install with `curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/ahoy-streamer-cli/main/install.sh | bash`,
+On macOS or Linux, install with `curl -fsSL https://raw.githubusercontent.com/oooAHOYooo/ahoy-streamer-cli/main/install.sh | bash`,
 or run `./install.sh` from a checkout. The installer creates an isolated `.venv`, installs
 the project so the declared OpenCV decoder is present, and adds a launcher under
 `~/.local/bin`. If Git, Python, or the base Python's venv/pip bootstrap is missing, it installs the
 required OS package through Omarchy or the detected distribution package manager, after asking
-the user. It preflights architecture, network access, and venv/pip support, then runs `doctor`
+the user on Linux. On macOS, missing Git or Python must be installed separately. It preflights architecture, network access, and venv/pip support, then runs `doctor`
 to summarize playback readiness. Re-running updates a clean managed checkout; local edits stop
 the update. `~/.local/bin/ahoy-streamer-uninstall` removes the managed checkout and virtual
 environment after confirmation but leaves OS packages installed. This OS bootstrap is separate

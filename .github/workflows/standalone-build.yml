@@ -1,0 +1,50 @@
+name: Standalone build checks
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/mac-linux-install-guide
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows-x64
+            executable: dist/ahoy-streamer.exe
+          - os: macos-15-intel
+            name: macos-intel
+            executable: dist/ahoy-streamer
+          - os: macos-latest
+            name: macos-apple-silicon
+            executable: dist/ahoy-streamer
+          - os: ubuntu-22.04
+            name: linux-x64
+            executable: dist/ahoy-streamer
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install build requirements
+        run: python -m pip install --disable-pip-version-check . pyinstaller==6.22.3
+      - name: Run offline tests
+        run: python -m unittest discover -s tests -q
+      - name: Build executable
+        run: python -m PyInstaller --clean --noconfirm --onefile --console --name ahoy-streamer --hidden-import=miniaudio --hidden-import=cv2 packaging/entry.py
+      - name: Check non-playback commands
+        shell: bash
+        run: |
+          "${{ matrix.executable }}" --version
+          "${{ matrix.executable }}" --help
+          "${{ matrix.executable }}" doctor --json > doctor.json
+          python -c 'import json; d=json.load(open("doctor.json"))["data"]; assert d["audio_ready"] and d["video_backend"], d'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ahoy-streamer-${{ matrix.name }}
+          path: ${{ matrix.executable }}
+          if-no-files-found: error

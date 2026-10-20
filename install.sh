@@ -135,11 +135,12 @@ check_network() {
     fail "Cannot reach $label. Check your internet connection or proxy, then rerun."
 }
 
-printf '[1/5] Checking Linux, Python, and install prerequisites...\n'
+printf '[1/5] Checking platform, Python, and install prerequisites...\n'
+platform="$(uname -s)"
 arch="$(uname -m)"
-case "$arch" in
-    x86_64|aarch64) ;;
-    *) fail "Linux video wheels are supported on x86_64 and aarch64, not $arch." ;;
+case "$platform:$arch" in
+    Linux:x86_64|Linux:aarch64|Darwin:x86_64|Darwin:arm64) ;;
+    *) fail "Unsupported platform: $platform $arch. See the README for supported systems." ;;
 esac
 
 script_path="${BASH_SOURCE[0]:-}"
@@ -186,7 +187,7 @@ check_launcher_path() {
     if [ -e "$path" ] && [ ! -L "$path" ]; then
         fail "Refusing to overwrite an existing file: $path"
     fi
-    if [ -L "$path" ] && [ "$(readlink -m -- "$path")" != "$(readlink -m -- "$target")" ]; then
+    if [ -L "$path" ] && [ "$(readlink "$path")" != "$target" ]; then
         fail "A different launcher already exists at $path."
     fi
 }
@@ -209,7 +210,11 @@ else
 fi
 
 if [ "$need_git" = 1 ] || [ "$need_python" = 1 ] || [ "$need_venv" = 1 ]; then
-    install_linux_bootstrap "$need_git" "$need_python" "$need_venv"
+    if [ "$platform" = Linux ]; then
+        install_linux_bootstrap "$need_git" "$need_python" "$need_venv"
+    else
+        fail "Install Git and Python 3.11+ with venv/pip, then rerun. On macOS with Homebrew: brew install git python@3.13"
+    fi
 fi
 command -v "$python_bin" >/dev/null 2>&1 || fail "Python is still unavailable; install Python 3.11+ and rerun."
 "$python_bin" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' || \
