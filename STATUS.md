@@ -1,12 +1,13 @@
 # Current handoff
 
-- Stage: app-like public-catalog TUI; standalone preview published at https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1 . The Python package is not published to PyPI.
-- Implementation branch: `codex/mac-linux-install-guide`, reviewed in PR #1. The preview release tag points at commit `d15d010` from this branch.
-- Standalone preview: Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs each include a PyInstaller one-file executable, START_HERE, dependency notes, and available third-party license files. The build workflow is `.github/workflows/standalone-build.yml`; `packaging/entry.py` and `packaging/make_release_bundle.py` support it. Mac executables are unsigned. Linux was built on Ubuntu 22.04; older distributions are unverified.
-- Install fallback: `install.sh` accepts Linux x86_64/aarch64 and macOS Intel/Apple Silicon, creates a virtualenv and launcher, and runs doctor. Linux can offer Git/Python/venv bootstrap; macOS needs those tools first. Windows README has a Git-free PowerShell source-install block. `mpv` is optional for macOS/Linux terminal video soundtracks; Windows terminal video is silent.
-- Playback: miniaudio handles supported standalone audio on macOS, Windows x64, and Linux x86_64; Linux aarch64 uses browser audio. OpenCV handles terminal video on supported hosts. Live playback has not been verified across the released systems.
-- CI: `gh run view 39426096098` — all four jobs successful. Each ran `python -m unittest discover -s tests -q`, built with PyInstaller 6.22.3, then checked executable version/help/doctor and both audio/video backends. `unzip -t` passed for all four ZIPs. The Apple Silicon executable also passed local `--version` and `doctor --json` (audio_ready true, video backend OpenCV).
-- Local checks: `python3 -m unittest discover -s tests -q` — 33 tests, 1 skipped; `bash -n install.sh uninstall.sh` and `git diff --check` — pass. The macOS/Linux installer and Windows PowerShell source install were not executed end to end.
-- Release: `gh release create v0.1.0-standalone-preview.1 ... --prerelease` succeeded; `gh release view` confirmed four public assets. SHA-256 values are in the release notes.
-- Task files: `.github/workflows/standalone-build.yml`, `packaging/entry.py`, `packaging/make_release_bundle.py`, `tests/test_playback.py`, `install.sh`, `uninstall.sh`, `README.md`, `docs/DEPENDENCIES.md`, `docs/RELEASE.md`, `STATUS.md`. Preserve unrelated untracked `ahoy-streamer-cli/` directory.
-- Remaining: check live audio/video on clean macOS/Linux/Windows devices, check macOS 13 and older Linux support, choose a project license, and complete T05 clean-install/package checks. Do not claim these checks passed. Next task: complete real-device validation.
+- Stage: public standalone preview is available; Python package is not published to PyPI.
+- Current branch: `main`, based on `origin/main` at `52b917d` before these local edits.
+- Latest published release: `v0.1.0-standalone-preview.1`, with Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs.
+- Follow-up prepared: `v0.1.0-standalone-preview.2`; README download links and bundle title point to this release. It is not published yet.
+- Installer and ZIP `START_HERE.txt` now show the same moonlit ASCII ship, AHOY wordmark, and tagline. Installer color is disabled for redirected output, `NO_COLOR`, and `TERM=dumb`; setup has five clear steps.
+- `.github/workflows/standalone-build.yml` now runs on `main` pushes as well as manual dispatch. It runs offline tests and executable checks, then uploads four platform ZIPs. GitHub release publishing remains manual.
+- Fastest install is still download, extract, and run. macOS builds are unsigned; Linux is built on Ubuntu 22.04; live playback has not been verified on clean target devices. Keep the next release marked prerelease.
+- Checks: `python3 -m unittest discover -s tests -q` — 33 tests, 1 skipped, pass. `bash -n install.sh uninstall.sh`, `python3 -m py_compile packaging/make_release_bundle.py`, and `git diff --check` — pass. Synthetic bundle check confirmed the artwork is in `START_HERE.txt`.
+- Package wheel check could not run because system Python has no `pip`. The full installer and live cross-platform playback were not run.
+- Changed files: `.github/workflows/standalone-build.yml`, `README.md`, `STATUS.md`, `docs/RELEASE.md`, `install.sh`, `packaging/make_release_bundle.py`.
+- Remaining: commit/push main, wait for the four build jobs, download/inspect artifacts, then publish the preview release. Stable release still needs clean-device playback validation and project license decision.

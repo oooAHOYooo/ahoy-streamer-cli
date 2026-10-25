@@ -24,7 +24,22 @@ def main():
         parser.error(f"executable not found: {exe}")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     start = (
-        "AHOY Streamer 0.1.0 standalone preview\n\n"
+        "          .     *            .         *\n"
+        "              _..._                     .\n"
+        "           .-'     '-.         *\n"
+        "          /  .     .  \\\n"
+        "         |     ___     |              .\n"
+        "          \\  .'   '.  /\n"
+        "           '-._____.-'         .\n"
+        "                 /|\\\n"
+        "                / | \\\n"
+        "          _____/_|__\\________\n"
+        "         /       |   \\       /\\\n"
+        "        /________|____\\_____/  \\\n"
+        "            ~~~ waves ~~~\n\n"
+        "              A H O Y   S T R E A M E R\n"
+        "           a listening room for the terminal\n\n"
+        "AHOY Streamer 0.1.0 standalone preview.2\n\n"
         "Run ahoy-streamer.exe from PowerShell on Windows, or ./ahoy-streamer "
         "from a terminal on macOS/Linux. On macOS/Linux, use chmod +x ahoy-streamer "
         "if extraction did not preserve execute permission.\n\n"

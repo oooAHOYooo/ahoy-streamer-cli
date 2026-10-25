@@ -1,30 +1,28 @@
 # Repository and release checklist
 
-## Hosted repository
+The public repository is https://github.com/oooAHOYooo/ahoy-streamer-cli. The Python
+package is not published to PyPI. The latest published release is the prerelease
+[`v0.1.0-standalone-preview.1`](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1).
+It contains Windows x64, macOS Intel/Apple Silicon, and Linux x64 standalone ZIPs.
 
-Created and pushed: https://github.com/oooAHOYooo/ahoy-streamer-cli (public for early testing).
-The `codex/streamer-tui-first-draft` branch contains the current runnable draft. The Python
-package is not published to PyPI. No license has been selected; choose one before accepting
-contributions or redistributing the code. Do not assume this project inherits the platform's
-license. Check package-name ownership before any PyPI release.
+## Follow-up preview
 
-## Public launch after T05
+The next planned preview is `v0.1.0-standalone-preview.2`. It includes the moonlit
+terminal ship artwork in the source installer and standalone ZIP `START_HERE.txt`.
+The build workflow runs on pushes to `main` and can be started manually. It runs offline
+tests and startup/backend checks, then uploads one ZIP artifact per platform. Publishing
+the GitHub release remains a manual step after all four build jobs pass.
 
-The manual `.github/workflows/standalone-build.yml` workflow builds one-file
-executables for Windows x64, macOS Intel/Apple Silicon, and Linux x64 with PyInstaller.
-The first four ZIPs were published as an unsigned
-[standalone preview](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1)
-after CI verified the offline tests and executable version/help/doctor checks. Each ZIP
-includes available third-party license files. Verify live audio/video on clean machines
-before calling the release stable. A project license remains undecided.
+Keep it marked as a prerelease. The binaries are unsigned on macOS, Linux was built on
+Ubuntu 22.04, and live playback has not been verified on clean target devices. The app
+uses public media and branding; confirm distribution rights for any recorded demo.
+Choose and publish a project license before accepting contributions or describing the
+source as open source.
 
-- Choose license and confirm branding/media usage rights for any recorded demo.
-- Verify macOS/Linux install and mpv instructions with exact tested versions.
-- Check redirects/playable media handling and subprocess cleanup.
-- Publish a small tagged release with honest support/limitations notes.
-- Record a short search → audio → terminal video demo using authorized media.
-- Include copyable agent examples and a concise bug report template.
-- Measure usefulness through issues/install feedback; no telemetry by default.
+Before a stable release:
 
-Avoid Homebrew, MCP servers, installers, accounts, or paid distribution before the
-core CLI has repeat users. Popularity is a hypothesis, not a release acceptance test.
+- Verify live audio and video on clean macOS, Windows, and Linux systems.
+- Check macOS 13 and older Linux support and document tested versions.
+- Check redirects and subprocess cleanup.
+- Include honest support notes, copyable agent examples, and a concise bug report template.
+- Keep telemetry off by default.

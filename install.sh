@@ -6,6 +6,47 @@ install_root="${XDG_DATA_HOME:-$HOME/.local/share}/ahoy-streamer-cli"
 local_bin="$HOME/.local/bin"
 python_bin="${PYTHON:-python3}"
 
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
+    cyan=$'\033[36m'
+    blue=$'\033[34m'
+    green=$'\033[32m'
+    bold=$'\033[1m'
+    dim=$'\033[2m'
+    reset=$'\033[0m'
+else
+    cyan=""
+    blue=""
+    green=""
+    bold=""
+    dim=""
+    reset=""
+fi
+
+step() {
+    printf '%s%s[%s/%s]%s %s\n' "$bold" "$cyan" "$1" "$2" "$reset" "$3"
+}
+
+show_banner() {
+    printf '%s' "$blue"
+    cat <<'ART'
+          .     *            .         *
+              _..._                     .
+           .-'     '-.         *
+          /  .     .  \
+         |     ___     |              .
+          \  .'   '.  /
+           '-._____.-'         .
+                 /|\
+                / | \
+          _____/_|__\________
+         /       |   \       /\
+        /________|____\_____/  \
+            ~~~ waves ~~~
+ART
+    printf '%s%s         A H O Y   S T R E A M E R%s\n' "$bold" "$cyan" "$reset"
+    printf '%s         a listening room for the terminal%s\n\n' "$dim" "$reset"
+}
+
 fail() {
     printf 'ahoy-streamer installer: %s\n' "$*" >&2
     exit 1
@@ -135,7 +176,9 @@ check_network() {
     fail "Cannot reach $label. Check your internet connection or proxy, then rerun."
 }
 
-printf '[1/5] Checking platform, Python, and install prerequisites...\n'
+printf '\n'
+show_banner
+step 1 5 "Checking platform, Python, and install prerequisites..."
 platform="$(uname -s)"
 arch="$(uname -m)"
 case "$platform:$arch" in
@@ -173,7 +216,7 @@ else
     fi
 fi
 
-printf '[2/5] Checking internet access...\n'
+step 2 5 "Checking internet access..."
 if [ "$local_install" = 0 ]; then
     check_network "https://github.com/oooAHOYooo/ahoy-streamer-cli" "GitHub"
 fi
@@ -225,7 +268,7 @@ if [ "$local_install" = 0 ]; then
 fi
 
 if [ "$local_install" = 0 ]; then
-    printf '[3/5] Getting the latest app source...\n'
+    step 3 5 "Getting the latest app source..."
     if [ -d "$install_root/.git" ]; then
         git -C "$install_root" pull --ff-only origin main
     elif [ -e "$install_root" ]; then
@@ -235,11 +278,11 @@ if [ "$local_install" = 0 ]; then
         git clone --depth 1 --branch main "$repo_url" "$install_root"
     fi
 else
-    printf '[3/5] Using this source checkout...\n'
+    step 3 5 "Using this source checkout..."
 fi
 
 venv_dir="$repo_dir/.venv"
-printf '[4/5] Installing the app and video dependencies...\n'
+step 4 5 "Installing the app and video dependencies..."
 "$python_bin" -m venv "$venv_dir"
 "$venv_dir/bin/python" -m pip install --disable-pip-version-check --editable "$repo_dir"
 
@@ -250,7 +293,7 @@ if [ "$local_install" = 0 ]; then
     ln -sfn "$repo_dir/uninstall.sh" "$uninstaller"
 fi
 
-printf '[5/5] Checking playback readiness...\n'
+step 5 5 "Checking playback readiness..."
 doctor_status=0
 if doctor_json="$("$player" doctor --json 2>/dev/null)"; then
     :
@@ -263,7 +306,7 @@ else
     printf '  Playback check failed (status %s); run "%s doctor" for details.\n' "$doctor_status" "$launcher"
 fi
 
-printf '\nInstallation complete.\nStart: %s\n' "$launcher"
+printf '\n%s%sInstallation complete.%s\nStart: %s\n' "$bold" "$green" "$reset" "$launcher"
 case ":${PATH:-}:" in
     *":$local_bin:"*) printf 'Or use: ahoy-streamer\n' ;;
 esac

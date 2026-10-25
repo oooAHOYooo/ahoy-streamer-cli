@@ -31,14 +31,14 @@ and request playback without navigating screens. JSON is a stable public contrac
 
 ## Quick install
 
-For the fewest prerequisites, download the [standalone preview release](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.1):
+For the fewest prerequisites, download the [standalone preview release](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.2):
 
 | System | Download |
 | --- | --- |
-| macOS Apple Silicon | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-macos-apple-silicon-preview.zip) |
-| macOS Intel | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-macos-intel-preview.zip) |
-| Linux x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-linux-x64-preview.zip) |
-| Windows x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.1/ahoy-streamer-windows-x64-preview.zip) |
+| macOS Apple Silicon | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.2/ahoy-streamer-macos-apple-silicon-preview.zip) |
+| macOS Intel | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.2/ahoy-streamer-macos-intel-preview.zip) |
+| Linux x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.2/ahoy-streamer-linux-x64-preview.zip) |
+| Windows x64 | [ZIP](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/download/v0.1.0-standalone-preview.2/ahoy-streamer-windows-x64-preview.zip) |
 
 Extract the ZIP and read `START_HERE.txt`. Run `./ahoy-streamer` from a terminal on
 macOS/Linux, or `./ahoy-streamer.exe` in Windows PowerShell. Python and the app's Python
