@@ -13,6 +13,12 @@ started manually. It runs offline tests and startup/backend checks, then uploads
 artifact per platform. Publishing the GitHub release remains a manual step after all four
 build jobs pass.
 
+An unofficial Homebrew tap is available at
+https://github.com/oooAHOYooo/homebrew-ahoy-streamer. Its formula installs the prebuilt
+macOS preview with `brew install oooAHOYooo/ahoy-streamer/ahoy-streamer`; separate Intel
+and Apple Silicon assets are SHA-256 pinned. The tap is not endorsed by Homebrew. Formula
+install checks run on Intel and Apple Silicon macOS runners.
+
 Keep it marked as a prerelease. The binaries are unsigned on macOS, Linux was built on
 Ubuntu 22.04, and live playback has not been verified on clean target devices. The app
 uses public media and branding; confirm distribution rights for any recorded demo.

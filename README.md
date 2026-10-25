@@ -31,6 +31,19 @@ and request playback without navigating screens. JSON is a stable public contrac
 
 ## Quick install
 
+### macOS with Homebrew
+
+If Homebrew is already installed, run:
+
+```sh
+brew install oooAHOYooo/ahoy-streamer/ahoy-streamer
+```
+
+Homebrew adds the AHOY tap and installs the preview executable; Python is not required.
+After the first install, `brew install ahoy-streamer` and `brew upgrade ahoy-streamer` work.
+This third-party tap installs an unsigned, unnotarized preview build. The macOS minimum is
+13 (Ventura).
+
 For the fewest prerequisites, download the [standalone preview release](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.2):
 
 | System | Download |

@@ -68,8 +68,9 @@ no secrets, media, local state or caches packaged. Public licensing remains a de
   but does not yet advance automatically. AHOY TV shows channel libraries, not a verified
   synchronized schedule.
 - T05: clean-install/package checks, CI, supported-platform documentation, and licensing.
-- Optional later work: Kitty/Sixel renderers, expanded Windows terminal checks, signed binaries, and a
-  package-manager formula.
+- A third-party Homebrew tap now installs the macOS preview. Optional later work: Kitty/Sixel
+  renderers, expanded Windows terminal checks, Apple signing/notarization, and other package
+  manager distribution.
 
 Escalate design questions only if the fixed contract cannot be satisfied. A failed test
 or missing executable is normally a task-level fix, not a reason to redesign the tool.
