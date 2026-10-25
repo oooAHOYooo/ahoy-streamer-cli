@@ -2,13 +2,15 @@
 
 The public repository is https://github.com/oooAHOYooo/ahoy-streamer-cli. The Python
 package is not published to PyPI. The latest published release is the prerelease
-[`v0.1.0-standalone-preview.2`](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.2).
+[`v0.1.0-standalone-preview.3`](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.3).
 It contains Windows x64, macOS Intel/Apple Silicon, and Linux x64 standalone ZIPs.
 
 ## Follow-up preview
 
-Preview.2 includes the moonlit terminal ship artwork in the source installer and
-standalone ZIP `START_HERE.txt`. The build workflow runs on pushes to `main` and can be
+Preview.3 adds continuous local radio, persistent playback state, and a short-lived
+in-memory catalog cache. All four platform builds passed offline tests and executable
+startup/backend checks in Actions run `40208735551`; ZIP contents and integrity were verified.
+It retains the moonlit terminal ship artwork in the installer and `START_HERE.txt`. The build workflow runs on pushes to `main` and can be
 started manually. It runs offline tests and startup/backend checks, then uploads one ZIP
 artifact per platform. Publishing the GitHub release remains a manual step after all four
 build jobs pass.

@@ -1,7 +1,13 @@
 # Current handoff
 
 - Stage: public standalone preview; Python package is not published to PyPI.
-- Branch: `codex/continuous-radio`; implementation changes are uncommitted.
+- Branch: `codex/continuous-radio`; feature commit `65f6d12` pushed to main.
+- Published `v0.1.0-standalone-preview.3` from `65f6d12` with all four platform ZIPs.
+  Actions run `40208735551` passed all four builds, offline tests, and executable
+  startup/backend checks. Downloaded ZIP integrity/startup-guide/executable checks pass.
+  Published asset SHA-256 digests match local files; checksums are in release notes.
+- Homebrew formula updated/pushed in tap commit `f6871b1` with new macOS checksums.
+  Tap installation CI is pending; local macOS install was not run.
 - Task: continuous local radio, persistent playback status, and faster repeat browsing.
 - Radio now advances on native audio EOF and loops the selected manifest while the
   TUI runs. Pause holds playback; stop/switch/quit cancels the station sequence.
@@ -21,11 +27,12 @@
   1 skipped (miniaudio runtime dependency absent). All playback/network uses mocks.
 - Check: `git diff --check` — pass.
 - Not run: live API/audio, interactive terminal walkthrough, packaging/install checks.
-  Real device playback remains unverified; no release artifacts were rebuilt/published.
+  Real device playback remains unverified; platform artifacts were rebuilt/published in CI.
 - Next task: opt-in native radio and terminal walkthrough on target systems, then
   consider nonblocking loading/search so network waits cannot delay station rollover.
-- Latest published release remains `v0.1.0-standalone-preview.2` (main `5091e8e`),
+- Latest published release: `v0.1.0-standalone-preview.3` (feature commit `65f6d12`),
   with Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs. Third-party Homebrew
   tap: `oooAHOYooo/ahoy-streamer/ahoy-streamer`; macOS preview is unsigned/unnotarized.
 - Stable release still needs clean-device playback validation and a project license
   decision. Keep releases marked prerelease until those checks are complete.
+- Release docs/download links updated to preview.3; older releases preserved.
