@@ -26,6 +26,15 @@ on the video stream. Window video opens in mpv when available or the system brow
 terminal companion to the website, not a port of its account,
 payment, administration, or synchronized-device features.
 
+Radio plays the selected manifest track from its beginning, advances automatically at the
+end of native audio playback, and loops the manifest while the TUI remains open. This is a
+local station sequence, not synchronized live playback. Browser fallback has no automatic
+advance. Stop or switch tracks to leave the sequence; a failed next track stops with a retry
+message. The bottom playback area keeps the current title, creator, state, and controls
+visible across sections. Recently visited catalogs are reused in memory for up to 60 seconds
+(including search); `r` or F5 fetches the current section again. Radio always fetches a fresh
+manifest when opened. Refresh preserves the selected item when it still exists.
+
 A small command interface remains alongside the TUI so agents can search, inspect,
 and request playback without navigating screens. JSON is a stable public contract.
 

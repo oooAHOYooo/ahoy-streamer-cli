@@ -1,18 +1,31 @@
 # Current handoff
 
-- Stage: public standalone preview is available; Python package is not published to PyPI.
-- Current branch: `main`; this handoff update is uncommitted.
-- Latest published release: [`v0.1.0-standalone-preview.2`](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.2), with Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs.
-- Preview.2 was built from main commit `5091e8e`. All four Actions jobs passed; all four ZIPs were downloaded and inspected to confirm the startup guide, executable, and artwork.
-- Homebrew: public third-party tap at https://github.com/oooAHOYooo/homebrew-ahoy-streamer. Mac users can run `brew install oooAHOYooo/ahoy-streamer/ahoy-streamer`; the formula supports Intel and Apple Silicon and passed installation/version/formula checks on both macOS CI runners. After the tap is added, `brew install ahoy-streamer` also works.
-- The tap installs the existing unsigned, unnotarized preview executable, pinned to release ZIP SHA-256 values. It is not an official Homebrew formula and does not add Apple's signature or notarization.
-- Installer and ZIP `START_HERE.txt` now show the same moonlit ASCII ship, AHOY wordmark, and tagline. Installer color is disabled for redirected output, `NO_COLOR`, and `TERM=dumb`; setup has five clear steps.
-- `.github/workflows/standalone-build.yml` now runs on `main` pushes as well as manual dispatch. It runs offline tests and executable checks, then uploads four platform ZIPs. GitHub release publishing remains manual.
-- Fastest install is still download, extract, and run. macOS builds are unsigned; Linux is built on Ubuntu 22.04; live playback has not been verified on clean target devices. Keep the next release marked prerelease.
-- Checks: `python3 -m unittest discover -s tests -q` — 33 tests, 1 skipped, pass. `bash -n install.sh uninstall.sh`, `python3 -m py_compile packaging/make_release_bundle.py`, and `git diff --check` — pass. Synthetic bundle check confirmed the artwork is in `START_HERE.txt`.
-- Package wheel check could not run because system Python has no `pip`. The full installer and live cross-platform playback were not run.
-- Changed files in the app repository: `.github/workflows/standalone-build.yml`, `README.md`, `STATUS.md`, `docs/RELEASE.md`, `install.sh`, `packaging/make_release_bundle.py`. Tap repository: `Formula/ahoy-streamer.rb`, `README.md`, `.github/workflows/test.yml`.
-- Checksums are recorded in the GitHub release notes. The release remains a prerelease; stable release still needs clean-device playback validation and a project license decision. Apple signing/notarization remains optional and requires active Apple Developer Program membership.
-- Release notes now include the Homebrew install route and link to the product page.
-- Promotion: website commit `f177e6b` updates `products.html` and `product-guides/streamer-tui.html` on the website repository's `main` branch. The custom domain was still serving preview.1 during verification; wait for its Pages deployment/cache to update before considering the public page live.
-- App-repository changes in this handoff: `README.md`, `STATUS.md`. `git diff --check` passes; app tests were not rerun because no app code changed.
+- Stage: public standalone preview; Python package is not published to PyPI.
+- Branch: `codex/continuous-radio`; implementation changes are uncommitted.
+- Task: continuous local radio, persistent playback status, and faster repeat browsing.
+- Radio now advances on native audio EOF and loops the selected manifest while the
+  TUI runs. Pause holds playback; stop/switch/quit cancels the station sequence.
+  A failed next track stops with an error instead of retrying indefinitely.
+- Playback area shows title/creator plus Playing, Paused, Stopped, or External and
+  control hints across sections. External playback remains controlled externally.
+- TUI checks playback every 200ms while idle. Catalogs are cached only in memory for
+  60 seconds and reused by search; F5/r bypasses cache. Radio opens fetch fresh data.
+  Refresh preserves selection by ID when the item remains available.
+- Radio is a local manifest loop from track beginnings, not synchronized station audio.
+  Browser fallback cannot auto-advance. Blocking catalog fetches/search input can delay
+  rollover until the main loop resumes; no background daemon/thread was introduced.
+- Changed files: `src/ahoy_streamer_cli/player.py`, `src/ahoy_streamer_cli/tui.py`,
+  `tests/test_radio.py`, `tests/test_tui.py`, `README.md`, `docs/SPEC.md`,
+  `docs/TASKS.md`, `STATUS.md`.
+- Check: `python3 -m unittest discover -s tests -v` — 38 tests run, 37 pass,
+  1 skipped (miniaudio runtime dependency absent). All playback/network uses mocks.
+- Check: `git diff --check` — pass.
+- Not run: live API/audio, interactive terminal walkthrough, packaging/install checks.
+  Real device playback remains unverified; no release artifacts were rebuilt/published.
+- Next task: opt-in native radio and terminal walkthrough on target systems, then
+  consider nonblocking loading/search so network waits cannot delay station rollover.
+- Latest published release remains `v0.1.0-standalone-preview.2` (main `5091e8e`),
+  with Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs. Third-party Homebrew
+  tap: `oooAHOYooo/ahoy-streamer/ahoy-streamer`; macOS preview is unsigned/unnotarized.
+- Stable release still needs clean-device playback validation and a project license
+  decision. Keep releases marked prerelease until those checks are complete.

@@ -29,31 +29,42 @@ def run(stdscr):
     typeahead_at = 0.0
     message = "Loading discovery…"
     section = NAV[section_idx][1]
+    cache = {}
+    stdscr.timeout(200)
 
-    def load():
+    def section_items(name, refresh=False):
+        saved = cache.get(name)
+        if name == "radio" or refresh or saved is None or time.monotonic() - saved[0] >= 60:
+            values = catalog.section_items(name)
+            cache[name] = (time.monotonic(), values)
+        return [dict(item) for item in cache[name][1]]
+
+    def load(refresh=False):
         nonlocal items, selected, message
         section = NAV[section_idx][1]
+        previous_id = items[selected]["id"] if items and selected < len(items) else None
         try:
             if section == "search":
                 items = []
                 message = "Press / to search the public catalogs"
             elif section == "radio":
-                items = catalog.section_items("radio")
+                items = section_items("radio", refresh)
                 if items:
                     items, elapsed = _radio_now(items)
-                    message = f"Live station · current item started {elapsed}s ago; station order/epoch from API"
+                    message = f"Station manifest · current item {elapsed}s in; playback starts at track beginning and loops locally"
                 else:
                     message = "Radio catalog is empty"
             elif section == "tv":
-                items = catalog.section_items("tv")
+                items = section_items("tv", refresh)
                 message = "Channel libraries only · no authoritative schedule returned by public API"
             elif section == "home":
-                items = catalog.section_items("home")
+                items = section_items("home", refresh)
                 message = "Explore public catalogs · choose a section at left"
             else:
-                items = catalog.section_items(section)
+                items = section_items(section, refresh)
                 message = f"{len(items)} items"
-            selected = min(selected, max(0, len(items) - 1))
+            selected = next((i for i, item in enumerate(items) if item["id"] == previous_id),
+                            min(selected, max(0, len(items) - 1)))
         except Exception as e:
             items = []
             message = f"Could not load {NAV[section_idx][0]}: {e}"
@@ -61,12 +72,14 @@ def run(stdscr):
     def search_now(stdscr, height, width):
         nonlocal items, selected, message, query, section_idx
         try:
+            stdscr.timeout(-1)
             curses.echo()
             curses.curs_set(1)
             _line(stdscr, height - 2, 2, "Search AHOY: ", width - 4)
             stdscr.refresh()
             query = stdscr.getstr(height - 2, 15, max(1, width - 18)).decode("utf-8", "replace").strip()
         finally:
+            stdscr.timeout(200)
             curses.noecho()
             curses.curs_set(0)
         if not query:
@@ -76,7 +89,7 @@ def run(stdscr):
         failures = []
         for name in ("music", "video", "podcasts", "artists", "events", "studio"):
             try:
-                found.extend(catalog.section_items(name))
+                found.extend(section_items(name))
             except Exception as e:
                 failures.append(name)
         needle = query.casefold()
@@ -111,7 +124,8 @@ def run(stdscr):
                 message = str(e)
             return
         try:
-            result = session.start(item, mode="window")
+            result = (session.start_radio(items, selected) if item.get("type") == "radio"
+                      else session.start(item, mode="window"))
             if result == "background":
                 message = "Playing · Space pauses/resumes, x stops"
             elif session.external:
@@ -125,6 +139,9 @@ def run(stdscr):
     try:
         while True:
             session.refresh_state()
+            if getattr(session, "notice", ""):
+                message = session.notice
+                session.notice = ""
             stdscr.erase()
             h, w = stdscr.getmaxyx()
             side = min(21, max(14, w // 4))
@@ -182,6 +199,7 @@ def run(stdscr):
                 _line(stdscr, h - 5, main_x, f"Selected  {chosen['title']} · {chosen['type']}", main_w)
             now = session.current
             player_label = f"NOW PLAYING  {now['title']} · {now.get('creator') or now['type']}" if now else "NOW PLAYING  Nothing yet"
+            _line(stdscr, h - 4, 2, f"{getattr(session, 'status', 'Stopped')} · Space selected play/pause · Ctrl-X stop", w - 4)
             _line(stdscr, h - 3, 2, player_label, w - 4, curses.A_BOLD)
             _line(stdscr, h - 2, 2, message, w - 4)
             stdscr.refresh()
@@ -229,7 +247,7 @@ def run(stdscr):
                 query, detail, selected = "", False, 0
                 load()
             elif key in (ord("r"), curses.KEY_F5):
-                load()
+                load(refresh=True)
             elif key == ord("/"):
                 search_now(stdscr, h, w)
                 detail = False

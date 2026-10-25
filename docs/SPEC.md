@@ -37,7 +37,8 @@ Origin precedence: flag > AHOY_BASE_URL > https://app.ahoy.ooo.
 Timeout default 10, valid 1..60 seconds; enforce bounded response size (5 MiB).
 Allow HTTPS origins, and HTTP only for localhost/127.0.0.1/[::1] development.
 Do not support origin credentials. Apply policy to redirects as well.
-No automatic retries or disk cache initially. For `all`, either endpoint failing means
+No automatic retries or disk cache initially. The TUI may reuse section catalogs in memory
+for up to 60 seconds; explicit refresh bypasses this cache and radio opens fetch fresh data. For `all`, either endpoint failing means
 an explicit error, not silently incomplete successful results.
 
 ## JSON
@@ -88,8 +89,10 @@ Audio uses miniaudio's bundled native library and a streaming HTTPS response ada
 Supported formats are MP3, WAV, FLAC, and OGG/OGA Vorbis. Signed URLs without file extensions
 are identified from their HTTP content type or passed to miniaudio's format sniffer. Known
 unsupported formats and playlists fall back to the system browser. Linux aarch64 skips
-miniaudio's runtime wheel and falls back to the system browser for audio. Seeking and radio
-track rollover are not implemented.
+miniaudio's runtime wheel and falls back to the system browser for audio. Audio seeking is not implemented. In the TUI, native radio audio advances at EOF and
+loops the selected manifest locally, beginning each track at zero. Pause holds the sequence;
+stop, switching playback, and quit cancel it. Rollover failure stops with an actionable error;
+external browser playback cannot auto-advance. This does not promise station synchronization.
 The TUI owns audio output and supports pause/stop while it remains open.
 
 ASCII video uses OpenCV VideoCapture to decode/resize frames and a local monochrome luma

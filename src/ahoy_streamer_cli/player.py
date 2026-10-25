@@ -399,6 +399,25 @@ class PlayerSession:
         self.current = None
         self.external = False
         self.video_paused = False
+        self.radio_items = []
+        self.notice = ""
+
+    @property
+    def status(self):
+        if not self.current:
+            return "Stopped"
+        if self.external:
+            return "External · use browser/player controls"
+        paused = self.audio.paused if self.audio else self.video_paused
+        return "Paused" if paused else "Playing"
+
+    def start_radio(self, items, index=0):
+        """Loop the station manifest locally, advancing only on native audio EOF."""
+        station = [dict(item) for item in items]
+        result = self.start(station[index])
+        if not self.external:
+            self.radio_items = station[index:] + station[:index]
+        return result
 
     def start(self, item, mode="window"):
         self.stop()
@@ -459,10 +478,21 @@ class PlayerSession:
         if self.audio:
             self.audio.refresh_state()
             if self.audio.closed:
+                station = self.radio_items
                 self.audio = None
                 self.current = None
+                if station:
+                    station = station[1:] + station[:1]
+                    try:
+                        self.start_radio(station)
+                        self.notice = "Radio advanced to the next track" if not self.external else "Radio opened externally · automatic advance unavailable"
+                    except Exception as exc:
+                        self.stop()
+                        self.notice = f"Radio stopped: {exc} · Space to retry"
 
     def stop(self):
+        self.radio_items = []
+        self.notice = ""
         if self.audio:
             self.audio.stop()
         if self.process:

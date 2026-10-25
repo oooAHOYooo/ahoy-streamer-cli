@@ -11,6 +11,9 @@ class Screen:
         self.keys = iter(keys)
         self.lines = []
 
+    def timeout(self, milliseconds):
+        self.interval = milliseconds
+
     def erase(self):
         pass
 

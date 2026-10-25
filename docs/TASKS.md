@@ -64,8 +64,8 @@ no secrets, media, local state or caches packaged. Public licensing remains a de
 ## Remaining release backlog
 
 - Finish P1–P5 above; podcasts, artists, events, studio, and radio browsing are already
-  implemented in the current draft. Radio playback starts at the manifest's current item
-  but does not yet advance automatically. AHOY TV shows channel libraries, not a verified
+  implemented in the current draft. Radio now loops the manifest locally with native audio EOF rollover; browser playback
+  cannot auto-advance, and synchronized station offsets remain deferred. AHOY TV shows channel libraries, not a verified
   synchronized schedule.
 - T05: clean-install/package checks, CI, supported-platform documentation, and licensing.
 - A third-party Homebrew tap now installs the macOS preview. Optional later work: Kitty/Sixel
