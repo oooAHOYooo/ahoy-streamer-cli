@@ -1,7 +1,7 @@
 # Current handoff
 
 - Stage: public standalone preview is available; Python package is not published to PyPI.
-- Current branch: `main` at `5091e8e` (on `origin/main`).
+- Current branch: `main`; this handoff update is uncommitted.
 - Latest published release: [`v0.1.0-standalone-preview.2`](https://github.com/oooAHOYooo/ahoy-streamer-cli/releases/tag/v0.1.0-standalone-preview.2), with Windows x64, macOS Intel/Apple Silicon, and Linux x64 ZIPs.
 - Preview.2 was built from main commit `5091e8e`. All four Actions jobs passed; all four ZIPs were downloaded and inspected to confirm the startup guide, executable, and artwork.
 - Homebrew: public third-party tap at https://github.com/oooAHOYooo/homebrew-ahoy-streamer. Mac users can run `brew install oooAHOYooo/ahoy-streamer/ahoy-streamer`; the formula supports Intel and Apple Silicon and passed installation/version/formula checks on both macOS CI runners. After the tap is added, `brew install ahoy-streamer` also works.
@@ -13,3 +13,6 @@
 - Package wheel check could not run because system Python has no `pip`. The full installer and live cross-platform playback were not run.
 - Changed files in the app repository: `.github/workflows/standalone-build.yml`, `README.md`, `STATUS.md`, `docs/RELEASE.md`, `install.sh`, `packaging/make_release_bundle.py`. Tap repository: `Formula/ahoy-streamer.rb`, `README.md`, `.github/workflows/test.yml`.
 - Checksums are recorded in the GitHub release notes. The release remains a prerelease; stable release still needs clean-device playback validation and a project license decision. Apple signing/notarization remains optional and requires active Apple Developer Program membership.
+- Release notes now include the Homebrew install route and link to the product page.
+- Promotion: website commit `f177e6b` updates `products.html` and `product-guides/streamer-tui.html` on the website repository's `main` branch. The custom domain was still serving preview.1 during verification; wait for its Pages deployment/cache to update before considering the public page live.
+- App-repository changes in this handoff: `README.md`, `STATUS.md`. `git diff --check` passes; app tests were not rerun because no app code changed.

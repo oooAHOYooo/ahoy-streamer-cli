@@ -2,7 +2,7 @@
 
 A keyboard-first terminal listening room for discovering and playing independent media from AHOY Streamer, with a small JSON command interface for agents.
 
-**Status: app-like terminal browsing draft. Not published as a package; real device playback has not been manually verified.**
+**Status: Public standalone preview. The Python package is not published to PyPI, and live playback has not been verified on every supported system.**
 
 ## Start here
 
@@ -30,6 +30,9 @@ A small command interface remains alongside the TUI so agents can search, inspec
 and request playback without navigating screens. JSON is a stable public contract.
 
 ## Quick install
+
+See the [AHOY Products page](https://ahoy.ooo/products) for the overview and the
+[Streamer TUI setup guide](https://ahoy.ooo/product-guides/streamer-tui.html) for downloads.
 
 ### macOS with Homebrew
 
